@@ -31,9 +31,9 @@ declare -A VM_SETTINGS=(
   ["FIREWALL_RULES_FILE"]="dc-vm-rules.txt"
 
   ## 'Aliases' used for firewall rules/elsewhere in Proxmox OS
-  ["MACHINE_ALIAS"]="ml1"                                 # Ex: labdc
+  ["MACHINE_ALIAS"]="pc1"                                 # Ex: labdc
   ["MACHINE_ALIAS_COMMENT"]="Domain controller"            # Ex: Domain Controller
-  ["MACHINE_CIDR"]="10.0.0.2/32"                                  # Ex: 10.0.0.2/32
+  ["MACHINE_CIDR"]="10.0.0.3/32"                                  # Ex: 10.0.0.2/32
   ## Used to replace string with MACHINE_ALIAS in firewall rules file:
   ["MACHINE_REPLACEMENT_STR"]="((\$MACHINE_ALIAS\$))"  # Must change corresponding value in firewall rules file if changed.
 
@@ -84,10 +84,10 @@ VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 
 declare -A SDN_SETTINGS=(
   ## Virtual networking:
-  ["ZONE_NAME"]="zone1"                                     # Ex: testzone
+  ["ZONE_NAME"]="ADLAB"                                     # Ex: testzone
   ["ZONE_COMMENT"]="Test zone 1"                                  # Ex: This is a test zone comment.
-  ["VNET_NAME"]="vnet2"                                     # Ex: testvnet
-  ["VNET_ALIAS"]="vnet2"                                    # Ex: testvnet
+  ["VNET_NAME"]="adnet"                                     # Ex: testvnet
+  ["VNET_ALIAS"]="adnet"                                    # Ex: testvnet
   ["VNET_SUBNET"]="10.0.0.1/24"                                   # Ex: 10.0.0.0/24
   ["VNET_GATEWAY"]="10.0.0.1"                                  # Ex: 10.0.0.1
 )
@@ -296,63 +296,78 @@ clear
 ## Alias is created at the datacenter level for domain controller VM
 
 ## Check if aliases already exist.
-alias_keys=('MACHINE_ALIAS')
-for alias_key_name in "${alias_keys[@]}"; do
-    alias_open="no"
-    while [ "$alias_open" == "no" ]; do
-    alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
+# alias_keys=('MACHINE_ALIAS')
+# for alias_key_name in "${alias_keys[@]}"; do
+#     alias_open="no"
+#     while [ "$alias_open" == "no" ]; do
+#     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
 
-    if [ -z "$alias_check" ]; then
-        alias_open="yes"
-    else
-        ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-        new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-        VM_SETTINGS[$alias_key_name]=$new_alias
-    fi
-    dialog --clear
-    done
-done
+#     if [ -z "$alias_check" ]; then
+#         alias_open="yes"
+#     else
+#         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+#         new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+#         VM_SETTINGS[$alias_key_name]=$new_alias
+#     fi
+#     dialog --clear
+#     done
+# done
 
-alias_keys=('LAN_ALIAS')
-for alias_key_name in "${alias_keys[@]}"; do
-    alias_open="no"
-    while [ "$alias_open" == "no" ]; do
-    alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
+# alias_keys=('LAN_ALIAS')
+# for alias_key_name in "${alias_keys[@]}"; do
+#     alias_open="no"
+#     while [ "$alias_open" == "no" ]; do
+#     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
 
-    if [ -z "$alias_check" ]; then
-        alias_open="yes"
-    else
-        ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-        new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-        SDN_SETTINGS[$alias_key_name]=$new_alias
-    fi
-    dialog --clear
-    done
-done
+#     if [ -z "$alias_check" ]; then
+#         alias_open="yes"
+#     else
+#         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+#         new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+#         SDN_SETTINGS[$alias_key_name]=$new_alias
+#     fi
+#     dialog --clear
+#     done
+# done
 
-pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &
-pid=$! # Process Id of the previous running command
-run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
+msg=$(cat <<EOF
+Attempt to assign firewall rules for domain controller VM and create network aliases?
+EOF
+)
 
-echo "Replacing ${VM_SETTINGS['MACHINE_REPLACEMENT_STR']} with ${VM_SETTINGS['MACHINE_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+dialog --title "Firewall rules" --yesno "$msg" 0 0
+dialog_response=$?
 
-## Using the original firewall rules file, a new firewall rules file is generated in /etc/pve/firewall/ directory
-## using the VMs ID number and inserting the domain controller's alias. .bak is appended to filename.
-while read -r line; do
-  echo "${line//${VM_SETTINGS['MACHINE_REPLACEMENT_STR']}/${VM_SETTINGS['MACHINE_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
-done < "${VM_SETTINGS['FIREWALL_RULES_FILE']}"
+dialog --clear
 
-## Alias is created at the datacenter for the Domain/LAN network:
-pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"  2>/dev/null &
-pid=$! # Process Id of the previous running command
-run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
+if [ "$dialog_response" == "0" ]; then
 
-echo "Replacing ${VM_SETTINGS['LAN_REPLACEMENT_STR']} with ${VM_SETTINGS['LAN_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
 
-## Using the backup file created earlier, the LAN alias is inserted into the firewall rules file.
-while read -r line; do
-  echo "${line//${VM_SETTINGS['LAN_REPLACEMENT_STR']}/${VM_SETTINGS['LAN_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw
-done < /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
 
-echo "Removing backup file."
-rm /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+    echo "Replacing ${VM_SETTINGS['MACHINE_REPLACEMENT_STR']} with ${VM_SETTINGS['MACHINE_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+
+    ## Using the original firewall rules file, a new firewall rules file is generated in /etc/pve/firewall/ directory
+    ## using the VMs ID number and inserting the domain controller's alias. .bak is appended to filename.
+    while read -r line; do
+    echo "${line//${VM_SETTINGS['MACHINE_REPLACEMENT_STR']}/${VM_SETTINGS['MACHINE_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+    done < "${VM_SETTINGS['FIREWALL_RULES_FILE']}"
+
+    ## Alias is created at the datacenter for the Domain/LAN network:
+    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"  2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
+
+    echo "Replacing ${VM_SETTINGS['LAN_REPLACEMENT_STR']} with ${VM_SETTINGS['LAN_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+
+    ## Using the backup file created earlier, the LAN alias is inserted into the firewall rules file.
+    while read -r line; do
+    echo "${line//${VM_SETTINGS['LAN_REPLACEMENT_STR']}/${VM_SETTINGS['LAN_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw
+    done < /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+
+    echo "Removing backup file."
+    rm /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+
+fi

@@ -1,0 +1,22 @@
+[OPTIONS]
+
+enable: 1
+
+[RULES]
+
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 5985 -log nolog # WinRM
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 123 -sport 123 -log nolog # NDP
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 80 -sport 49152:65535 -log nolog
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 445 -sport 49152:65535 -log nolog # SMB
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 137,138,139 -sport 137,138,49152:65535 -log nolog
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 49152:65535 -sport 49152:65535 -log nolog # Eph Ports
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 9389 -sport 49152:65535 -log nolog # Active Directory Module
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 88 -sport 49152:65535 -log nolog # Kerberos udp/88
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 88 -sport 49152:65535 -log nolog # Kerberos tcp/88
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 389 -sport 49152:65535 -log nolog # LDAP udp/389
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 389 -sport 49152:65535 -log nolog # LDAP tcp/389
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 135 -sport 49152:65535 -log nolog # RPC Endpoint Mapper
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 53 -sport 49152:65535 -log nolog # DNS udp/53
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 53 -sport 49152:65535 -log nolog # DNS tcp/53
+IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p icmp -log nolog -icmp-type any # ICMP IN
+IN DROP -i net0 -dest dc/(($MACHINE_ALIAS$)) -log info # Implicit Drop/LOG
