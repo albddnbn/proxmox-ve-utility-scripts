@@ -150,3 +150,83 @@ function present_form () {
     #     echo "$single_value"
     # done
 }
+
+function create_checklist () {
+    ## -t | --title = title of the dialog/menu
+    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --noborder --output json
+    ## -c | --col = column to grab, ex: zone
+    ## -a | --auto = auto return first option if only one
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -b|--backtitle)
+                back_title="$2"
+                shift 2
+                ;;
+            -t|--title)
+                menu_title="$2"
+                shift 2
+                ;;
+            -p|--pvesh)
+                pvesh_cmd="$2"
+                shift 2
+                ;;
+            -mc|--main_column)
+                column_to_grab="$2"
+                shift 2
+                ;;
+            -sc|--second_column)
+                secondary_column="$2"
+                shift 2
+                ;;
+            *)
+            echo "Unknown option: $1"
+            return 1
+            ;;
+        esac
+    done
+
+    cmd=(dialog --separate-output --checklist \"$menu_title\" 22 76 16)
+    # echo "cmd: ${cmd[@]}"
+
+    formatted_checklist_options=()
+    main_col_results=$(eval "$pvesh_cmd" | jq -r ".[] | .$column_to_grab")
+    mapfile -t main_results <<< "$main_col_results"
+    secondary_column=$(eval "$pvesh_cmd" | jq -r ".[] | .$secondary_column")
+    mapfile -t sec_col_results <<< "$secondary_column"
+
+
+    ## Some different ways to format output with jq, I'm putting them here for safekeeping:
+    ## pvesh get /cluster/resources --type vm --noborder --output json | jq '. [] | {(.name): .vmid}'
+    ## pvesh get /cluster/resources --type vm --noborder --output json | jq '. [] | "\(.vmid) \(.name)"'
+    ## pvesh get /cluster/resources --type vm --noborder --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"'
+    ## results=$(pvesh get /cluster/resources --type vm --noborder --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"')
+    
+    count=0
+    for single_option in $main_col_results; do
+        target_index=$count
+        ## increment count
+        count=$((count+1))
+        ## Create the display_name for the option:
+        display_name="$single_option ${sec_col_results[$target_index]}"
+        # echo "setting display name: $single_option"
+        formatted_checklist_string="$count \"$display_name\" off"
+        # echo "added_string: $formatted_checklist_string"
+        formatted_checklist_options+=($formatted_checklist_string)
+    done
+
+    # echo "executing cmd: ${cmd[@]} ${formatted_checklist_options[@]}"
+    choices=$(eval "${cmd[@]} ${formatted_checklist_options[@]}" 2>&1 >/dev/tty)
+
+    # echo "$choices"
+
+    final_results=()
+    for choice in $choices; do
+    # echo "adding $choice to the list.."
+        ## subtract one from final_choice to get index
+        final_choice=$((choice-1))
+        # echo "adding: ${main_results[$final_choice]}"
+        final_results+=("${main_results[$final_choice]}")
+    done
+
+    echo "${final_results[@]}"
+}

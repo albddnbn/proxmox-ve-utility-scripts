@@ -263,55 +263,22 @@ if [ "$dialog_response" == "0" ]; then
   pvesh create /cluster/sdn/zones --type simple --zone "${SDN_SETTINGS['ZONE_NAME']}" --mtu 1460 2>/dev/null &
   pid=$! # Process Id of the previous running command
   run_spinner $pid "Creating zone: ${SDN_SETTINGS['ZONE_NAME']}"
-  # spin='-\|/'
-  # i=0
-  # while kill -0 $pid 2>/dev/null
-  # do
-  #   i=$(( (i+1) %4 ))
-  #   printf "\r${spin:$i:1} Creating zone: ${SDN_SETTINGS['ZONE_NAME']}"
-  #   sleep .1
-  # done
 
   ## Virtual Network Creation:
   ## VNET w/SUBNET
   pvesh create /cluster/sdn/vnets --vnet "${SDN_SETTINGS['VNET_NAME']}" -alias "${SDN_SETTINGS['VNET_ALIAS']}" -zone "${SDN_SETTINGS['ZONE_NAME']}"  2>/dev/null &
   pid=$! # Process Id of the previous running command
   run_spinner $pid "Creating VNET: ${SDN_SETTINGS['VNET_NAME']}"
-  # i=0
-  # while kill -0 $pid 2>/dev/null
-  # do
-  #   i=$(( (i+1) %4 ))
-  #   printf "\r${spin:$i:1} Creating Zone VNET: ${SDN_SETTINGS['VNET_NAME']}"
-  #   sleep .1
-  # done
 
   pvesh create /cluster/sdn/vnets/${SDN_SETTINGS['VNET_NAME']}/subnets --subnet "${SDN_SETTINGS['VNET_SUBNET']}" -gateway ${SDN_SETTINGS['VNET_GATEWAY']} -snat 0 -type subnet   2>/dev/null &
   pid=$! # Process Id of the previous running command
   run_spinner $pid "Creating VNET SUBNET: ${SDN_SETTINGS['VNET_SUBNET']}"
-  # i=0
-  # while kill -0 $pid 2>/dev/null
-  # do
-  #   i=$(( (i+1) %4 ))
-  #   printf "\r${spin:$i:1} Creating Vnet SUBNET: ${SDN_SETTINGS['VNET_SUBNET']}"
-  #   sleep .1
-  # done
-
 
   pvesh set /cluster/sdn   2>/dev/null &
   pid=$! # Process Id of the previous running command
   run_spinner $pid "Reloading Network Config SDN"
-  # i=0
-  # while kill -0 $pid 2>/dev/null
-  # do
-  #   i=$(( (i+1) %4 ))
-  #   printf "\r${spin:$i:1} Creating Zone VNET: ${SDN_SETTINGS['VNET_NAME']}"
-  #   sleep .1
-  # done
-# else
-#   echo "Skipping virtual network creation."
-fi
 
-# echo -e "\nCreating VM: \e[36m${VM_SETTINGS['VM_NAME']}\e[0m\n"
+fi
 
 ## Creates a vm using specified ISO(s) and storage locations.
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
@@ -323,19 +290,49 @@ pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['VM_ID']} -name "${VM_SE
       -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0" 2>/dev/null &
 pid=$! # Process Id of the previous running command
 run_spinner $pid "Creating VM: ${VM_SETTINGS['VM_NAME']}"
-# while kill -0 $pid 2>/dev/null
-# do
-#   i=$(( (i+1) %4 ))
-#   printf "\r${spin:$i:1} "
-#   sleep .1
-# done
 
 clear
 ## FIREWALL RULES FOR VM (/etc/pve/firewall)
 ## Alias is created at the datacenter level for domain controller VM
-echo "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
 
-pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"
+## Check if aliases already exist.
+alias_keys=('MACHINE_ALIAS')
+for alias_key_name in "${alias_keys[@]}"; do
+    alias_open="no"
+    while [ "$alias_open" == "no" ]; do
+    alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
+
+    if [ -z "$alias_check" ]; then
+        alias_open="yes"
+    else
+        ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+        new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+        VM_SETTINGS[$alias_key_name]=$new_alias
+    fi
+    dialog --clear
+    done
+done
+
+alias_keys=('LAN_ALIAS')
+for alias_key_name in "${alias_keys[@]}"; do
+    alias_open="no"
+    while [ "$alias_open" == "no" ]; do
+    alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
+
+    if [ -z "$alias_check" ]; then
+        alias_open="yes"
+    else
+        ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+        new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+        SDN_SETTINGS[$alias_key_name]=$new_alias
+    fi
+    dialog --clear
+    done
+done
+
+pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &
+pid=$! # Process Id of the previous running command
+run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
 
 echo "Replacing ${VM_SETTINGS['MACHINE_REPLACEMENT_STR']} with ${VM_SETTINGS['MACHINE_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
 
@@ -346,9 +343,9 @@ while read -r line; do
 done < "${VM_SETTINGS['FIREWALL_RULES_FILE']}"
 
 ## Alias is created at the datacenter for the Domain/LAN network:
-echo "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
-
-pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"
+pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"  2>/dev/null &
+pid=$! # Process Id of the previous running command
+run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
 
 echo "Replacing ${VM_SETTINGS['LAN_REPLACEMENT_STR']} with ${VM_SETTINGS['LAN_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
 
