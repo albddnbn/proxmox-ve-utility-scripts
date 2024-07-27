@@ -119,6 +119,8 @@ function check_pve_item () {
     echo "${pve_api_listing[@]}"
 }
 
+## Placeholder function showing how to present a form using bash dialog.
+## Source: https://bash.cyberciti.biz/guide/The_form_dialog_for_input
 function present_form () {
     shell=""
     groups=""
@@ -151,6 +153,12 @@ function present_form () {
     # done
 }
 
+## Creates a checklist using dialog command.
+## Allows for submission of two column names, in cases where one would not be descriptive enough when displayed.
+## For ex: when displaying a checklist to delete virtual machines from a Proxmox cluster, the VM's ID is required
+##         for use with related command line utilities. However, displaying a checklist with only the VM ID would not 
+##         allow the user to make an informed choice. The secondary column in this case would be the VMs name.
+## Returns chosen items from the main/first column at the moment.
 function create_checklist () {
     ## -t | --title = title of the dialog/menu
     ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --noborder --output json
@@ -208,9 +216,7 @@ function create_checklist () {
         count=$((count+1))
         ## Create the display_name for the option:
         display_name="$single_option ${sec_col_results[$target_index]}"
-        # echo "setting display name: $single_option"
         formatted_checklist_string="$count \"$display_name\" off"
-        # echo "added_string: $formatted_checklist_string"
         formatted_checklist_options+=($formatted_checklist_string)
     done
 
@@ -221,10 +227,8 @@ function create_checklist () {
 
     final_results=()
     for choice in $choices; do
-    # echo "adding $choice to the list.."
         ## subtract one from final_choice to get index
         final_choice=$((choice-1))
-        # echo "adding: ${main_results[$final_choice]}"
         final_results+=("${main_results[$final_choice]}")
     done
 
