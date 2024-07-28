@@ -1,8 +1,11 @@
 #!/bin/bash
-# Script Name: gen_vnet_vm.sh
+# Script Name: create_vm.sh
 # Author: Alex B.
-# Date: 7/24/2024
-# Description: Creates a new Windows virtual machine and corresponding SDN/virtual networking elements if specified.
+# Date: 7/27/2024
+# Description: Script creates virtual machine and corresponding SDN/virtual networking elements if specified.
+#              Virtual machine will have two CDs/ISOs attached:
+#                  1. Operating System ISO (Windows, Linux) - virtual machine will boot to this when started.
+#                  2. Secondary ISO - such as VirtIO or other drivers.
 # Notes:
 # - dc-vm-rules.txt - contains firewall rules for a WINDOWS DOMAIN CONTROLLER VM.
 # - Virtual machine hardware settings derived from 'known good' recommendations:
@@ -13,7 +16,7 @@
 # - create firewall rules file for Windows client VM, offer user option.
 # - implement error-checking for IP addresses, prefixes, subnet config, etc.
 #     Random generation option for private subnet config?
-#
+# - cloud-init
 
 ########################################################################################################################
 ## Stage 1 - Preparation
@@ -27,7 +30,8 @@ declare -A VM_SETTINGS=(
   ["VM_NAME"]="vm-hostname"                            # Ex: lab-dc-01
   ["NUM_CORES"]=2                                      # Number of CPU cores used by VM                       
   ["NUM_SOCKETS"]=2                                    # Number of CPU sockets used by VM
-  ["MEMORY"]=8192                                      # VM Memory in GB
+  ["MEMORY"]=8192                                     # VM Memory in GB
+  ["VM_NETWORK"]=""                                     
   ["FIREWALL_RULES_FILE"]="dc-vm-rules.txt"
 
   ## 'Aliases' used for firewall rules/elsewhere in Proxmox OS
@@ -82,6 +86,11 @@ VM_SETTINGS["LAN_CIDR"]="${vm_setting_choices[9]}"
 VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[10]}"
 VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 
+## Get VM_NETWORK individually with text entry:
+VM_SETTINGS["VM_NETWORK"]=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
+
+
+
 declare -A SDN_SETTINGS=(
   ## Virtual networking:
   ["ZONE_NAME"]="ADLAB"                                     # Ex: testzone
@@ -101,7 +110,7 @@ declare -A STORAGE_OPTIONS=(
 ## The user is prompted to select the Windows and VirtIO isos, from the contents of STORAGE_OPTIONS['ISO_STORAGE'].
 declare -A chosen_isos=(
   ["main_iso"]="Operating System ISO selection:"
-  ["virtio_iso"]="VirtIO ISO Selection:"
+  ["virtio_iso"]="VirtIO/Secondary ISO Selection:"
 )
 
 dialog --clear
@@ -175,7 +184,6 @@ done;
 ## Stage 4 - Virtual Network Creation
 ## If user wants to create zone, vnet, and subnet, script will create them here.
 ########################################################################################################################
-## Confirm zone details
 msg=$(cat <<EOF
 Create corresponding SDN elements for virtual machine?
 (Zone, Vnet, and Subnet)
@@ -188,76 +196,51 @@ dialog_response=$?
 dialog --clear
 
 if [ "$dialog_response" == "0" ]; then
-  echo "inside the if now";
-    # open fd
+    echo "inside the if now";
+
     exec 3>&1
 
-    # Store data to $VALUES variable
-  ZONEVALUES=$(dialog --ok-label "Submit" \
-      --backtitle "Settings Confirmation" \
-      --title "Verify Proxmox SDN Zone Settings" \
-      --form "Please correct values as necessary:" \
-  25 80 0 \
-    "Zone Name:"     1  1 "${SDN_SETTINGS['ZONE_NAME']}" 	   1  25 35 0 \
-    "Zone Comment:"  2  1	"${SDN_SETTINGS['ZONE_COMMENT']}"  2  25 35 0 \
-    "Vnet Name:"     3  1	"${SDN_SETTINGS['VNET_NAME']}" 	   3  25 35 0 \
-    "Vnet Alias:"    4  1	"${SDN_SETTINGS['VNET_ALIAS']}" 	 4  25 35 0 \
-    "Vnet Subnet"    5  1	"${SDN_SETTINGS['VNET_SUBNET']}" 	 5  25 35 0 \
-    "Vnet Gateway:"  6  1	"${SDN_SETTINGS['VNET_GATEWAY']}"  6  25 35 0 \
-    2>&1 1>&3)
+    ZONEVALUES=$(dialog --ok-label "Submit" \
+        --backtitle "Settings Confirmation" \
+        --title "Verify Proxmox SDN Zone Settings" \
+        --form "Please correct values as necessary:" \
+    25 80 0 \
+      "Zone Name:"     1  1 "${SDN_SETTINGS['ZONE_NAME']}" 	   1  25 35 0 \
+      "Zone Comment:"  2  1	"${SDN_SETTINGS['ZONE_COMMENT']}"  2  25 35 0 \
+      "Vnet Name:"     3  1	"${SDN_SETTINGS['VNET_NAME']}" 	   3  25 35 0 \
+      "Vnet Alias:"    4  1	"${SDN_SETTINGS['VNET_ALIAS']}" 	 4  25 35 0 \
+      "Vnet Subnet"    5  1	"${SDN_SETTINGS['VNET_SUBNET']}" 	 5  25 35 0 \
+      "Vnet Gateway:"  6  1	"${SDN_SETTINGS['VNET_GATEWAY']}"  6  25 35 0 \
+      2>&1 1>&3)
 
-    # close fd
     exec 3>&-
 
-    ## use mapfile to turn values into array
-    # mapfile -t array_items <<< "$VALUES"
+    # ## turn $VALUES variable into an array
+    mapfile -t zone_setting_choices <<< "$ZONEVALUES"
 
-    # for single_value in $VALUES; do
-    #     echo "$single_value"
-    # done
+    SDN_SETTINGS["ZONE_NAME"]="${zone_setting_choices[0]}"
+    SDN_SETTINGS["ZONE_COMMENT"]="${zone_setting_choices[1]}"
+    SDN_SETTINGS["VNET_NAME"]="${zone_setting_choices[2]}"
+    SDN_SETTINGS["VNET_ALIAS"]="${zone_setting_choices[3]}"
+    SDN_SETTINGS["VNET_SUBNET"]="${zone_setting_choices[4]}"
+    SDN_SETTINGS["VNET_GATEWAY"]="${zone_setting_choices[5]}"
 
+    ## Secondary check to make sure SDN setting variables are filled out.
+    # Loop through the SDN_SETTINGS array, prompt user for any missing values.
+    for var in "${!SDN_SETTINGS[@]}"; do
+        if [[ -z "${SDN_SETTINGS[$var]}" ]]; then
+            read -p "Enter a value for ${var}: " value
+        fi
+        ## Strip whitespace from value, if it exists.
+        ## if var doesn't end with _COMMENT, strip whitespace from value.
+        # if [[ $var != *_COMMENT ]]; then
+        # SDN_SETTINGS[$var]="$(echo -e "${value}" | tr -d '[:space:]')"
+        # else
+        # SDN_SETTINGS[$var]="${value:-}"
+        # fi
+    done
 
-
-  # # Store data to $VALUES variable
-  # VALUES=$(dialog --ok-label "Submit" \
-  #     --backtitle "Settings Confirmation" \
-  #     --title "Verify Proxmox SDN Zone Settings" \
-  #     --form "Please correct values as necessary:" \
-  # 25 80 0 \
-  #   "Zone Name:"     1  1 "${SDN_SETTINGS['ZONE_NAME']}" 	   1  25 35 0 \
-  #   "Zone Comment:"  2  1	"${SDN_SETTINGS['ZONE_COMMENT']}"  2  25 35 0 \
-  #   "Vnet Name:"     3  1	"${SDN_SETTINGS['VNET_NAME']}" 	   3  25 35 0 \
-  #   "Vnet Alias:"    4  1	"${SDN_SETTINGS['VNET_ALIAS']}" 	 4  25 35 0 \
-  #   "Vnet Subnet"    5  1	"${SDN_SETTINGS['VNET_SUBNET']}" 	 5  25 35 0 \
-  #   "Vnet Gateway:"  6  1	"${SDN_SETTINGS['VNET_GATEWAY']}"  6  25 35 0 \
-  # 3>&1 1>&2 2>&3 3>&-)
-
-  # ## turn $VALUES variable into an array
-  mapfile -t zone_setting_choices <<< "$ZONEVALUES"
-
-  SDN_SETTINGS["ZONE_NAME"]="${zone_setting_choices[0]}"
-  SDN_SETTINGS["ZONE_COMMENT"]="${zone_setting_choices[1]}"
-  SDN_SETTINGS["VNET_NAME"]="${zone_setting_choices[2]}"
-  SDN_SETTINGS["VNET_ALIAS"]="${zone_setting_choices[3]}"
-  SDN_SETTINGS["VNET_SUBNET"]="${zone_setting_choices[4]}"
-  SDN_SETTINGS["VNET_GATEWAY"]="${zone_setting_choices[5]}"
-
-  ## Secondary check to make sure SDN setting variables are filled out.
-  # Loop through the SDN_SETTINGS array, prompt user for any missing values.
-  for var in "${!SDN_SETTINGS[@]}"; do
-    if [[ -z "${SDN_SETTINGS[$var]}" ]]; then
-      read -p "Enter a value for ${var}: " value
-    fi
-    ## Strip whitespace from value, if it exists.
-    ## if var doesn't end with _COMMENT, strip whitespace from value.
-    # if [[ $var != *_COMMENT ]]; then
-    # SDN_SETTINGS[$var]="$(echo -e "${value}" | tr -d '[:space:]')"
-    # else
-    # SDN_SETTINGS[$var]="${value:-}"
-    # fi
-  done
-
-  dialog --clear
+#   dialog --clear
 
   ## Spinner shows some kind of progress next to each SDN API call
   pvesh create /cluster/sdn/zones --type simple --zone "${SDN_SETTINGS['ZONE_NAME']}" --mtu 1460 2>/dev/null &
@@ -284,7 +267,7 @@ fi
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
 pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['VM_ID']} -name "${VM_SETTINGS['VM_NAME']}" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
       -memory 8192 -cpu cputype=x86-64-v2-AES -cores 2 -sockets 2 -cdrom "${chosen_isos['main_iso']}" \
-      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "virtio,bridge=${SDN_SETTINGS['VNET_NAME']},firewall=1" \
+      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "virtio,bridge=$VM_SETTINGS["VM_NETWORK"],firewall=1" \
       -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
       -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
       -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0" 2>/dev/null &
@@ -294,42 +277,6 @@ run_spinner $pid "Creating VM: ${VM_SETTINGS['VM_NAME']}"
 clear
 ## FIREWALL RULES FOR VM (/etc/pve/firewall)
 ## Alias is created at the datacenter level for domain controller VM
-
-## Check if aliases already exist.
-# alias_keys=('MACHINE_ALIAS')
-# for alias_key_name in "${alias_keys[@]}"; do
-#     alias_open="no"
-#     while [ "$alias_open" == "no" ]; do
-#     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
-
-#     if [ -z "$alias_check" ]; then
-#         alias_open="yes"
-#     else
-#         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-#         new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-#         VM_SETTINGS[$alias_key_name]=$new_alias
-#     fi
-#     dialog --clear
-#     done
-# done
-
-# alias_keys=('LAN_ALIAS')
-# for alias_key_name in "${alias_keys[@]}"; do
-#     alias_open="no"
-#     while [ "$alias_open" == "no" ]; do
-#     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
-
-#     if [ -z "$alias_check" ]; then
-#         alias_open="yes"
-#     else
-#         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-#         new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-#         SDN_SETTINGS[$alias_key_name]=$new_alias
-#     fi
-#     dialog --clear
-#     done
-# done
-
 msg=$(cat <<EOF
 Attempt to assign firewall rules for domain controller VM and create network aliases?
 EOF
@@ -341,6 +288,42 @@ dialog_response=$?
 dialog --clear
 
 if [ "$dialog_response" == "0" ]; then
+
+    ## Check if aliases already exist.
+    alias_keys=('MACHINE_ALIAS')
+    for alias_key_name in "${alias_keys[@]}"; do
+        alias_open="no"
+        while [ "$alias_open" == "no" ]; do
+        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
+
+        if [ -z "$alias_check" ]; then
+            alias_open="yes"
+        else
+            ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+            new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+            VM_SETTINGS[$alias_key_name]=$new_alias
+        fi
+        dialog --clear
+        done
+    done
+
+    alias_keys=('LAN_ALIAS')
+    for alias_key_name in "${alias_keys[@]}"; do
+        alias_open="no"
+        while [ "$alias_open" == "no" ]; do
+        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
+
+        if [ -z "$alias_check" ]; then
+            alias_open="yes"
+        else
+            ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+            new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+            SDN_SETTINGS[$alias_key_name]=$new_alias
+        fi
+        dialog --clear
+        done
+    done
+
 
 
     pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &

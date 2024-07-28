@@ -234,3 +234,31 @@ function create_checklist () {
 
     echo "${final_results[@]}"
 }
+
+## Simple text entry.
+## Source: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable
+function create_text_entry () {
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -t|--title)
+                title="$2"
+                shift 2
+                ;;
+            -s|--subtext)
+                subtext="$2"
+                shift 2
+                ;;
+            *)
+            echo "Unknown option: $1"
+            return 1
+            ;;
+        esac
+    done
+    user_input=$(\
+    dialog --title "$title" \
+        --inputbox "$subtext" 8 40 \
+        3>&1 1>&2 2>&3 3>&- \
+    )
+
+    echo "$user_input"
+}

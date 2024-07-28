@@ -17,6 +17,8 @@ IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp
 IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 389 -sport 49152:65535 -log nolog # LDAP tcp/389
 IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 135 -sport 49152:65535 -log nolog # RPC Endpoint Mapper
 IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 53 -sport 49152:65535 -log nolog # DNS udp/53
+# IN ACCEPT -i net0 -source 0.0.0.0/0          -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 53 -sport 49152:65535 -log nolog # DNS udp/53
 IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 53 -sport 49152:65535 -log nolog # DNS tcp/53
 IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p icmp -log nolog -icmp-type any # ICMP IN
+IN ACCEPT -i net0 -source 0.0.0.0/0          -dest 0.0.0.0/0              -p udp -sport 68 -dport 67 -log nolog # DHCP IN
 IN DROP -i net0 -dest dc/(($MACHINE_ALIAS$)) -log info # Implicit Drop/LOG
