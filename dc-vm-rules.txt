@@ -4,21 +4,32 @@ enable: 1
 
 [RULES]
 
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 5985 -log nolog # WinRM
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 123 -sport 123 -log nolog # NDP
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 80 -sport 49152:65535 -log nolog
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 445 -sport 49152:65535 -log nolog # SMB
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 137,138,139 -sport 137,138,49152:65535 -log nolog
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 49152:65535 -sport 49152:65535 -log nolog # Eph Ports
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 9389 -sport 49152:65535 -log nolog # Active Directory Module
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 88 -sport 49152:65535 -log nolog # Kerberos udp/88
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 88 -sport 49152:65535 -log nolog # Kerberos tcp/88
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 389 -sport 49152:65535 -log nolog # LDAP udp/389
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 389 -sport 49152:65535 -log nolog # LDAP tcp/389
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 135 -sport 49152:65535 -log nolog # RPC Endpoint Mapper
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 53 -sport 49152:65535 -log nolog # DNS udp/53
-# IN ACCEPT -i net0 -source 0.0.0.0/0          -dest dc/(($MACHINE_ALIAS$)) -p udp -dport 53 -sport 49152:65535 -log nolog # DNS udp/53
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p tcp -dport 53 -sport 49152:65535 -log nolog # DNS tcp/53
-IN ACCEPT -i net0 -source dc/(($LAN_ALIAS$)) -dest dc/(($MACHINE_ALIAS$)) -p icmp -log nolog -icmp-type any # ICMP IN
-IN ACCEPT -i net0 -source 0.0.0.0/0          -dest 0.0.0.0/0              -p udp -sport 68 -dport 67 -log nolog # DHCP IN
-IN DROP -i net0 -dest dc/(($MACHINE_ALIAS$)) -log info # Implicit Drop/LOG
+IN ACCEPT -p tcp -dport 547 -sport 546 -log nolog # DHCPv6
+IN ACCEPT -p udp -dport 547 -sport 546 -log nolog # DHCPv6
+IN ACCEPT -source 0.0.0.0/0 -dest 0.0.0.0/0 -p udp -dport 67 -sport 68 -log nolog # DHCP udp/68 > udp/67
+IN ACCEPT -p icmp -log nolog -icmp-type any # ICMP
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 9389 -sport 49152:65535 -log nolog # AD Web Services (AD Powershell Module) tcp/9389
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 49152:65535 -sport 49152:65535 -log nolog # Ephemeral Ports (tcp)
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 137,138,139 -sport 137,138,49152:65535 -log nolog # udp 137/138/139
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 389 -log nolog # LDAP udp/389
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 443 -log nolog # HTTPS tcp/443
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 80 -log nolog # HTTP tcp/80
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 5985 -log nolog # WinrM tcp/5985
+|IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 3702 -log nolog # Web Services Dynamic Discovery tcp/3702
+|IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 3702 -log nolog # Web Services Dynamic Discovery udp/3702
+|IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 1900 -log nolog # Microsoft SSDP udp/1900
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 123 -log nolog # NTP udp/123
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 135 -log nolog # RCP Endpoint Mapper udp/135
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 135 -log nolog # RPC Endpoint Mapper tcp/135
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 88 -log nolog # KERBEROS udp/88
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 88 -log nolog # KERBEROS tcp/88
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 445 -log nolog # SMB tcp/445
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 5355 -log nolog # LLMNR udp/5355
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 5355 -log nolog # LLMNR tcp/5355
+|IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest 0.0.0.0/0 -p udp -dport 5353 -log nolog # MULTICAST DNS
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 389 -log nolog # LDAP tcp/389
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p udp -dport 53 -log nolog # DNS udp/53
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 53 -log nolog # DNS tcp/53
+|IN ACCEPT -p udp -log info # UDP IN LOG
+|IN DROP -log info # debugging
+|IN ACCEPT -p tcp -log info # TCP IN LOG
