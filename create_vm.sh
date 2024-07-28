@@ -87,8 +87,8 @@ VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[10]}"
 VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 
 ## Get VM_NETWORK individually with text entry:
-VM_SETTINGS["VM_NETWORK"]=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
-
+vm_network_reply=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
+VM_SETTINGS["VM_NETWORK"]="$vm_network_reply"
 
 
 declare -A SDN_SETTINGS=(
@@ -196,8 +196,6 @@ dialog_response=$?
 dialog --clear
 
 if [ "$dialog_response" == "0" ]; then
-    echo "inside the if now";
-
     exec 3>&1
 
     ZONEVALUES=$(dialog --ok-label "Submit" \
@@ -242,24 +240,24 @@ if [ "$dialog_response" == "0" ]; then
 
 #   dialog --clear
 
-  ## Spinner shows some kind of progress next to each SDN API call
-  pvesh create /cluster/sdn/zones --type simple --zone "${SDN_SETTINGS['ZONE_NAME']}" --mtu 1460 2>/dev/null &
-  pid=$! # Process Id of the previous running command
-  run_spinner $pid "Creating zone: ${SDN_SETTINGS['ZONE_NAME']}"
+    ## Spinner shows some kind of progress next to each SDN API call
+    pvesh create /cluster/sdn/zones --type simple --zone "${SDN_SETTINGS['ZONE_NAME']}" --mtu 1460 2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating zone: ${SDN_SETTINGS['ZONE_NAME']}"
 
-  ## Virtual Network Creation:
-  ## VNET w/SUBNET
-  pvesh create /cluster/sdn/vnets --vnet "${SDN_SETTINGS['VNET_NAME']}" -alias "${SDN_SETTINGS['VNET_ALIAS']}" -zone "${SDN_SETTINGS['ZONE_NAME']}"  2>/dev/null &
-  pid=$! # Process Id of the previous running command
-  run_spinner $pid "Creating VNET: ${SDN_SETTINGS['VNET_NAME']}"
+    ## Virtual Network Creation:
+    ## VNET w/SUBNET
+    pvesh create /cluster/sdn/vnets --vnet "${SDN_SETTINGS['VNET_NAME']}" -alias "${SDN_SETTINGS['VNET_ALIAS']}" -zone "${SDN_SETTINGS['ZONE_NAME']}"  2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating VNET: ${SDN_SETTINGS['VNET_NAME']}"
 
-  pvesh create /cluster/sdn/vnets/${SDN_SETTINGS['VNET_NAME']}/subnets --subnet "${SDN_SETTINGS['VNET_SUBNET']}" -gateway ${SDN_SETTINGS['VNET_GATEWAY']} -snat 0 -type subnet   2>/dev/null &
-  pid=$! # Process Id of the previous running command
-  run_spinner $pid "Creating VNET SUBNET: ${SDN_SETTINGS['VNET_SUBNET']}"
+    pvesh create /cluster/sdn/vnets/${SDN_SETTINGS['VNET_NAME']}/subnets --subnet "${SDN_SETTINGS['VNET_SUBNET']}" -gateway ${SDN_SETTINGS['VNET_GATEWAY']} -snat 0 -type subnet   2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating VNET SUBNET: ${SDN_SETTINGS['VNET_SUBNET']}"
 
-  pvesh set /cluster/sdn   2>/dev/null &
-  pid=$! # Process Id of the previous running command
-  run_spinner $pid "Reloading Network Config SDN"
+    pvesh set /cluster/sdn   2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Reloading Network Config SDN"
 
 fi
 
