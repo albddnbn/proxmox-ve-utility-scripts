@@ -13,10 +13,9 @@ ZONE_CHOICES=$(create_checklist -b "Select zones to remove:" --title "Select zon
 dialog --clear
 pvesh get /cluster/sdn/vnets --output json | jq -r '.[] | .zone'
 mapfile -t ZONE_CHOICES <<< $(echo $ZONE_CHOICES | tr " " "\n" | sort -u)
-echo "ZONE_CHOICES: ${ZONE_CHOICES[@]}"
+# echo "ZONE_CHOICES: ${ZONE_CHOICES[@]}"
 for single_zone in ${ZONE_CHOICES[@]}; do
 
-    read -p "Cycling through zone: $single_zone"
     ## Creates an array of listings from the vnet API endpoint
     readarray -t vnets_json_string < <(pvesh get /cluster/sdn/vnets --noborder --output-format json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]")
     
@@ -44,7 +43,7 @@ for single_zone in ${ZONE_CHOICES[@]}; do
             #https://linuxsimply.com/bash-scripting-tutorial/conditional-statements/if-else/if-in-array/
             if [[ "${ZONE_CHOICES[@]}" =~ "$current_vnet_zone_name" ]]; then
 
-                echo "current_vnet_zone_name: $current_vnet_zone_name is in ZONE_CHOICES"
+                # echo "current_vnet_zone_name: $current_vnet_zone_name is in ZONE_CHOICES"
 
                 ## Get listing of subnets, take same approach
                 readarray -t subnets_json_string < <(pvesh get /cluster/sdn/vnets/$current_vnet/subnets --noborder --output-format json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]")
