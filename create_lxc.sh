@@ -74,15 +74,27 @@ if [[ $choice_index -eq 1 ]]; then
     fi
     done
 
-    ## User selects the specific container template they want to download.
-    echo "These are the container templates that match your search:"
-    select lxc in "${lxc_names[@]}"; do
-    echo "You selected: $lxc"
+    ## Display menu with lxc_names:
+    cmd=(dialog --keep-tite --backtitle "LXC Selection" --title "LXC Selection" --menu "Select container template to download:" 22 76 16)
 
-    LXC_SETTINGS['container_choice']=$lxc
-
-    break
+    count=0
+    lxc_menu_options=()
+    for single_option in $lxc_names; do
+        # echo "single_option: $single_option"
+        added_string="$((++count)) "$single_option""
+        lxc_menu_options+=($added_string)
     done
+
+    length=${#lxc_names[@]}
+    if [[ ($length -gt 1) ]]; then
+        choices=$("${cmd[@]}" "${lxc_menu_options[@]}" 2>&1 >/dev/tty)
+        ## subtract one from final_choice to get index
+        final_choice=$((final_choice-1))
+        ## 'return' the selected option
+        echo "${lxc_menu_options[$final_choice]}"
+    else
+        echo "$lxc_names"
+    fi
 
     ## User selects storage location for template file:
     LXC_SETTINGS["template_storage"]=$(user_selection_single -b "Storage Selection" -t "Storage location for lxc template file:" -p "pvesh get /nodes/$NODE_NAME/storage --output json" -c "storage" -a "1")    
