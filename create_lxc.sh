@@ -20,7 +20,7 @@ declare -A LXC_SETTINGS=(
   ["container_choice"]=""
   ["cores"]="1"
   ["description"]="lxc container"
-  ["hostname"]="lxc_1"
+  ["hostname"]="lxc1"
   ["memory"]="2048"
   ["nameserver"]="8.8.8.8"
   ["onboot"]=0
@@ -89,11 +89,11 @@ if [[ $choice_index -eq 1 ]]; then
 
     length=${#lxc_names[@]}
     if [[ ($length -gt 1) ]]; then
-        choices=$("${cmd[@]}" "${lxc_menu_options[@]}" 2>&1 >/dev/tty)
+        final_choice=$("${cmd[@]}" "${lxc_menu_options[@]}" 2>&1 >/dev/tty)
         ## subtract one from final_choice to get index
         final_choice=$((final_choice-1))
         ## 'return' the selected option
-        echo "${lxc_menu_options[$final_choice]}"
+        echo "${lxc_names[$final_choice]}"
         LXC_SETTINGS["container_choice"]="${lxc_names[$final_choice]}"
     else
         echo "$lxc_names"
@@ -105,9 +105,9 @@ if [[ $choice_index -eq 1 ]]; then
     LXC_SETTINGS["template_storage"]=$storage_choice
     ## Download the container template to specified storage location
     echo "pveam download ${LXC_SETTINGS["template_storage"]} ${LXC_SETTINGS["container_choice"]}"
-    pveam download ${LXC_SETTINGS["template_storage"]} ${LXC_SETTINGS["container_choice"]}
+    pveam download "${LXC_SETTINGS["template_storage"]}" "${LXC_SETTINGS["container_choice"]}"
 
-    LXC_SETTINGS["ostemplate"]="${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}"
+    LXC_SETTINGS["ostemplate"]="${LXC_SETTINGS['template_storage']}":vztmpl/"${LXC_SETTINGS['container_choice']}"
 
 ## List available templates using pveam utility
 elif [[ $choice_index -eq 2 ]]; then
@@ -125,7 +125,6 @@ fi
 ## User selects storage disk for lxc image:
 lxc_location=$(user_selection_single -b "Storage Selection" -t "Please select storage location for lxc image:" -p "pvesh get /nodes/$NODE_NAME/storage --output json" -c "storage" -a "1")
 LXC_SETTINGS["vm_storage"]=$lxc_location
-
 # open fd
 exec 3>&1
 
@@ -135,21 +134,21 @@ VALUES=$(dialog --ok-label "Submit" \
     --title "Proxmox LXC Settings" \
     --form "Confirm container settings:" \
 25 80 0 \
-    "Container choice:" 1 1	"${LXC_SETTINGS['container_choice']}" 	1 10 35 0 \
-    "Cores:"    2 1	"${LXC_SETTINGS['cores']}"  	2 10 25 0 \
-    "Description:"    3 1	"${LXC_SETTINGS['description']}"  	3 10 25 0 \
-    "Hostname:"     4 1	"${LXC_SETTINGS['hostname']}" 	4 10 25 0 \
-    "Memory:"    5 1	"${LXC_SETTINGS['memory']}"  	5 10 25 0 \
-    "OS Template:"    6 1	"${LXC_SETTINGS['ostemplate']}"  	6 10 25 0 \
-    "VM Storage:"     7 1	"${LXC_SETTINGS['vm_storage']}" 	7 10 25 0 \
-    "Template Storage:"    8 1	"${LXC_SETTINGS['template_storage']}"  	8 10 25 0 \
-    "Nameserver:"    9 1	"${LXC_SETTINGS['nameserver']}"  	9 10 25 0 \
-    "Onboot:"     10 1	"${LXC_SETTINGS['onboot']}" 	10 10 25 0 \
-    "Start:"     11 1	"${LXC_SETTINGS['start']}" 	11 10 25 0 \
-    "Swap:"    12 1	"${LXC_SETTINGS['swap']}"  	12 10 25 0 \
-    "Unprivileged:"    13 1	"${LXC_SETTINGS['underprivileged']}"  	13 10 25 0 \
-    "Timezone:"     14 1	"${LXC_SETTINGS['timezone']}" 	14 10 25 0 \
-    "VM ID:"     15 1	"${LXC_SETTINGS['vm_id']}" 	15 10 25 0 \
+    "Container choice:" 1 1	"${LXC_SETTINGS['container_choice']}" 	1 20 50 0 \
+    "Cores:"    2 1	"${LXC_SETTINGS['cores']}"  	2 20 50 0 \
+    "Description:"    3 1	"${LXC_SETTINGS['description']}"  	3 20 50 0 \
+    "Hostname:"     4 1	"${LXC_SETTINGS['hostname']}" 	4 20 50 0 \
+    "Memory:"    5 1	"${LXC_SETTINGS['memory']}"  	5 20 50 0 \
+    "OS Template:"    6 1	"${LXC_SETTINGS['ostemplate']}"  	6 20 100 0 \
+    "VM Storage:"     7 1	"${LXC_SETTINGS['vm_storage']}" 	7 20 50 0 \
+    "Template Storage:"    8 1	"${LXC_SETTINGS['template_storage']}"  	8 20 50 0 \
+    "Nameserver:"    9 1	"${LXC_SETTINGS['nameserver']}"  	9 20 50 0 \
+    "Onboot:"     10 1	"${LXC_SETTINGS['onboot']}" 	10 20 50 0 \
+    "Start:"     11 1	"${LXC_SETTINGS['start']}" 	11 20 50 0 \
+    "Swap:"    12 1	"${LXC_SETTINGS['swap']}"  	12 20 50 0 \
+    "Unprivileged:"    13 1	"${LXC_SETTINGS['underprivileged']}"  	13 20 50 0 \
+    "Timezone:"     14 1	"${LXC_SETTINGS['timezone']}" 	14 20 50 0 \
+    "VM ID:"     15 1	"${LXC_SETTINGS['vm_id']}" 	15 20 50 0 \
 2>&1 1>&3)
 
 # close fd
@@ -164,12 +163,12 @@ LXC_SETTINGS["cores"]="${lxc_settings_choices[1]}"
 LXC_SETTINGS["description"]="${lxc_settings_choices[2]}"
 LXC_SETTINGS["hostname"]="${lxc_settings_choices[3]}"
 LXC_SETTINGS["memory"]="${lxc_settings_choices[4]}"
-LXC_SETTINGS["nameserver"]="${lxc_settings_choices[5]}"
-LXC_SETTINGS["onboot"]="${lxc_settings_choices[6]}"
-LXC_SETTINGS["ostemplate"]="${lxc_settings_choices[7]}"
-LXC_SETTINGS["start"]="${lxc_settings_choices[8]}"
-LXC_SETTINGS["vm_storage"]="${lxc_settings_choices[9]}"
-LXC_SETTINGS["template_storage"]="${lxc_settings_choices[10]}"
+LXC_SETTINGS["ostemplate"]="${lxc_settings_choices[5]}"
+LXC_SETTINGS["vm_storage"]="${lxc_settings_choices[6]}"
+LXC_SETTINGS["template_storage"]="${lxc_settings_choices[7]}"
+LXC_SETTINGS["nameserver"]="${lxc_settings_choices[8]}"
+LXC_SETTINGS["onboot"]="${lxc_settings_choices[9]}"
+LXC_SETTINGS["start"]="${lxc_settings_choices[10]}"
 LXC_SETTINGS["swap"]="${lxc_settings_choices[11]}"
 LXC_SETTINGS["unprivileged"]="${lxc_settings_choices[12]}"
 LXC_SETTINGS["timezone"]="${lxc_settings_choices[13]}"
@@ -183,7 +182,7 @@ NET_ADAPTER_INFO["bridge"]=$vm_network_choice
 ## Make sure VM ID is 'open'
 vm_id_open="no"
 while [ "$vm_id_open" == "no" ]; do
-  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${LXC_SETTINGS[VM_ID]}" -c "id")
+  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${LXC_SETTINGS[vm_id]}" -c "id")
   vm_ids_separated=()
   ## Separate out the ID #s using cut -d '/' -f 2
   ## the items originally look like 'qemu/101' or 'lxc/102' so we have to chop off the 'container type'
@@ -191,14 +190,14 @@ while [ "$vm_id_open" == "no" ]; do
     vm_ids_separated+=($(echo "$vm_id_string" | cut -d '/' -f 2))
   done;
 
-  ## Check vm_ids_separated for exact match of VARS[VM_ID]
-  exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "${LXC_SETTINGS[VM_ID]}")
+  ## Check vm_ids_separated for exact match of VARS[vm_id]
+  exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "${LXC_SETTINGS[vm_id]}")
   if [ -z "$exact_match" ]; then
     vm_id_open="yes"
   else
     ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-    new_vm_id=$(dialog --inputbox "VM ID ${LXC_SETTINGS[VM_ID]} is already in use. Please select a new VM ID:" 0 0 3>&1 1>&2 2>&3 3>&-)
-    LXC_SETTINGS["VM_ID"]=$new_vm_id
+    new_vm_id=$(dialog --inputbox "VM ID ${LXC_SETTINGS[vm_id]} is already in use. Please select a new VM ID:" 0 0 3>&1 1>&2 2>&3 3>&-)
+    LXC_SETTINGS["vm_id"]=$new_vm_id
   fi
 
   dialog --clear
@@ -206,10 +205,19 @@ done
 
 ## Create the container
 ## pvesh create /nodes/$NODE_NAME/lxc --vmid ${LXC_SETTINGS["vmid"]} --ostemplate "${LXC_SETTINGS["template_storage"]}:vztmpl/${LXC_SETTINGS["container_choice"]}" --hostname "${LXC_SETTINGS["hostname"]}" --cores ${LXC_SETTINGS["cores"]} --memory "${LXC_SETTINGS["memory"]}" --swap ${LXC_SETTINGS["swap"]} --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --onboot ${LXC_SETTINGS["onboot"]} --start ${LXC_SETTINGS["start"]} --description ${LXC_SETTINGS["description"]} --nameserver ${LXC_SETTINGS["nameserver"]} --timezone ${LXC_SETTINGS["timezone"]} --storage ${LXC_SETTINGS["vm_storage"]}torage "${LXC_SETTINGS["vm_storage"]}"
-echo "ostemplate choice: ${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}"
+echo "ostemplate choice: ${LXC_SETTINGS['ostemplate']}"
 ## pvesh create /nodes/$NODE_NAME/lxc --ostemplate "${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}" --vmid "${LXC_SETTINGS["vmid"]}" --hostname "${LXC_SETTINGS["hostname"]}" --memory "${LXC_SETTINGS["memory"]}" --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --description "${LXC_SETTINGS["description"]}" --storage "${LXC_SETTINGS["vm_storage"]}" --start "${LXC_SETTINGS['start']}"
 
-pvesh create /nodes/$NODE_NAME/lxc --ostemplate "${LXC_SETTINGS['container_choice']}" --vmid "${LXC_SETTINGS["vmid"]}" --hostname "${LXC_SETTINGS["hostname"]}" --memory "${LXC_SETTINGS["memory"]}" --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --description "${LXC_SETTINGS["description"]}" --storage "${LXC_SETTINGS["vm_storage"]}" --start "${LXC_SETTINGS['start']}"
+lxc_cmd=(pvesh create /nodes/$NODE_NAME/lxc -ostemplate "${LXC_SETTINGS['ostemplate']}" \
+    -vmid "${LXC_SETTINGS['vm_id']}" -hostname "${LXC_SETTINGS['hostname']}" -memory "${LXC_SETTINGS['memory']}" \
+    -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']}" \
+    -description "${LXC_SETTINGS['description']}" -storage "${LXC_SETTINGS['vm_storage']}")
+# ${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}
+# echo "lxc_cmd: ${lxc_cmd[@]}"
+pvesh create /nodes/$NODE_NAME/lxc -ostemplate "${LXC_SETTINGS['ostemplate']}" \
+    -vmid "${LXC_SETTINGS['vm_id']}" -hostname "${LXC_SETTINGS['hostname']}" -memory "${LXC_SETTINGS['memory']}" \
+    -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']}" \
+    -description "${LXC_SETTINGS['description']}" -storage "${LXC_SETTINGS['vm_storage']}"
 
 dialog \
     --backtitle "Terminal Session" \
