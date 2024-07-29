@@ -26,10 +26,10 @@ source functions.sh
 
 declare -A VM_SETTINGS=(
   ## Details for VM creation:
-  ["VM_ID"]="101"                                      # Ex: 101
-  ["VM_NAME"]="vm-hostname"                            # Ex: lab-dc-01
-  ["NUM_CORES"]=2                                      # Number of CPU cores used by VM                       
-  ["NUM_SOCKETS"]=2                                    # Number of CPU sockets used by VM
+  ["VM_ID"]="303"                                      # Ex: 101
+  ["VM_NAME"]="lab-pc-02"                            # Ex: lab-dc-01
+  ["NUM_CORES"]=1                                      # Number of CPU cores used by VM                       
+  ["NUM_SOCKETS"]=1                                    # Number of CPU sockets used by VM
   ["MEMORY"]=8192                                     # VM Memory in GB
   ["VM_NETWORK"]=""                                     
   ["FIREWALL_RULES_FILE"]="dc-vm-rules.txt"
@@ -137,7 +137,7 @@ done
 ## Check if the VM ID already exists:
 vm_id_open="no"
 while [ "$vm_id_open" == "no" ]; do
-  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --noborder --output json" -s "${VM_SETTINGS[VM_ID]}" -c "id")
+  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${VM_SETTINGS[VM_ID]}" -c "id")
   vm_ids_separated=()
   ## Separate out the ID #s using cut -d '/' -f 2
   ## the items originally look like 'qemu/101' or 'lxc/102' so we have to chop off the 'container type'
@@ -168,16 +168,16 @@ done
 ## - virtio_iso: VirtIO ISO
 ########################################################################################################################
 ## Select node name (node is auto-selected if there's only one)
-NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --noborder --output json" -c "node" -a "1")
+NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
 
 ## Prompt user for STORAGE_OPTIONS values
 for var in "${!STORAGE_OPTIONS[@]}"; do
-  STORAGE_OPTIONS[$var]=$(user_selection_single -b "Storage Selection" -t "${STORAGE_OPTIONS[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage --noborder --output json" -c "storage" -a "1")
+  STORAGE_OPTIONS[$var]=$(user_selection_single -b "Storage Selection" -t "${STORAGE_OPTIONS[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage --output json" -c "storage" -a "1")
 done;
 
 ## User is prompted to select Windows and VirtIO isos
 for var in "${!chosen_isos[@]}"; do
-  chosen_isos[$var]=$(user_selection_single -b "ISO Selection" -t "${chosen_isos[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage/${STORAGE_OPTIONS['ISO_STORAGE']}/content --noborder --output json" -c "volid" -a "1")
+  chosen_isos[$var]=$(user_selection_single -b "ISO Selection" -t "${chosen_isos[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage/${STORAGE_OPTIONS['ISO_STORAGE']}/content --output json" -c "volid" -a "1")
 done;
 
 ########################################################################################################################
@@ -265,7 +265,7 @@ fi
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
 pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['VM_ID']} -name "${VM_SETTINGS['VM_NAME']}" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
       -memory 8192 -cpu cputype=x86-64-v2-AES -cores 2 -sockets 2 -cdrom "${chosen_isos['main_iso']}" \
-      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "virtio,bridge=$VM_SETTINGS["VM_NETWORK"],firewall=1" \
+      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "virtio,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
       -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
       -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
       -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0" 2>/dev/null &
@@ -292,7 +292,7 @@ if [ "$dialog_response" == "0" ]; then
     for alias_key_name in "${alias_keys[@]}"; do
         alias_open="no"
         while [ "$alias_open" == "no" ]; do
-        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
+        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
 
         if [ -z "$alias_check" ]; then
             alias_open="yes"
@@ -309,7 +309,7 @@ if [ "$dialog_response" == "0" ]; then
     for alias_key_name in "${alias_keys[@]}"; do
         alias_open="no"
         while [ "$alias_open" == "no" ]; do
-        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --noborder --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
+        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
 
         if [ -z "$alias_check" ]; then
             alias_open="yes"

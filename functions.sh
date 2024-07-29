@@ -1,7 +1,7 @@
 ## offers selection based on dialog command, pvesh command, and column to grab
 function user_selection_single () {
     ## -t | --title = title of the dialog/menu
-    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --noborder --output json
+    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --output json
     ## -c | --col = column to grab, ex: zone
     ## -a | --auto = auto return first option if only one
     while [ "$#" -gt 0 ]; do
@@ -40,6 +40,7 @@ function user_selection_single () {
     count=0
 
     options=()
+    ##
     test_options=$(eval "$pvesh_cmd" | jq -r ".[] | .$column_to_grab" | sort)
 
 
@@ -88,9 +89,9 @@ function run_spinner () {
 
 
 ## Check if item exists using given pvesh command, search string, and column to grab:
-# Ex: check_pve_item -p "pvesh get /cluster/resources --type vm --noborder --output json" -s "test" -c "name"
+# Ex: check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "test" -c "name"
 function check_pve_item () {
-    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --noborder --output json
+    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --output json
     ## -s | --search = search string, ex: "zone1"
     ## -c | --column = column to grab, ex: zone
     while [ "$#" -gt 0 ]; do
@@ -161,7 +162,7 @@ function present_form () {
 ## Returns chosen items from the main/first column at the moment.
 function create_checklist () {
     ## -t | --title = title of the dialog/menu
-    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --noborder --output json
+    ## -p | --pvesh = pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --output json
     ## -c | --col = column to grab, ex: zone
     ## -a | --auto = auto return first option if only one
     while [ "$#" -gt 0 ]; do
@@ -204,10 +205,10 @@ function create_checklist () {
 
 
     ## Some different ways to format output with jq, I'm putting them here for safekeeping:
-    ## pvesh get /cluster/resources --type vm --noborder --output json | jq '. [] | {(.name): .vmid}'
-    ## pvesh get /cluster/resources --type vm --noborder --output json | jq '. [] | "\(.vmid) \(.name)"'
-    ## pvesh get /cluster/resources --type vm --noborder --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"'
-    ## results=$(pvesh get /cluster/resources --type vm --noborder --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"')
+    ## pvesh get /cluster/resources --type vm --output json | jq '. [] | {(.name): .vmid}'
+    ## pvesh get /cluster/resources --type vm --output json | jq '. [] | "\(.vmid) \(.name)"'
+    ## pvesh get /cluster/resources --type vm --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"'
+    ## results=$(pvesh get /cluster/resources --type vm --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"')
     
     count=0
     for single_option in $main_col_results; do

@@ -11,7 +11,7 @@
 
 ## Variables used for container creation (# cores, network settings, etc.)
 ## If values are not set - script will prompt user for values during execution.
-declare -A VARS=(
+declare -A LXC_SETTINGS=(
   ["container_choice"]=""
   ["cores"]="1"
   ["description"]="lxc container"
@@ -37,31 +37,73 @@ declare -A NET_ADAPTER_INFO=(
     ["firewall"]=1
 )
 
-## User inputs search string (ex: ubuntu)
-read -p "Search available templates (ex: ubuntu, centos): " search_string
+## See if user wants to download new template or use one from storage:
+cmd=(dialog --keep-tite --backtitle "Template Source" --title "Template Source" --menu "Select template source:" 22 76 16)
+# echo "cmd: ${cmd[@]}"
+count=0
 
-## Create list of available templates based on search_string
-mapfile -t available_lxc_templates < <(pveam available | grep -i $search_string)
-length=${#available_lxc_templates[@]}
-## Holds list of matching template names
-lxc_names=()
-for ((i=0; i<$length; i++)); do
-  IFS='        ' read -ra split_line <<< "${available_lxc_templates[$i]}"
-  if [[ -n ${split_line[1]} ]]; then
-  echo "Adding ${split_line[1]} to the list"
-    lxc_names+=("${split_line[1]}")
-  fi
-done
+options=(1 "Download new template" 2 "Use template from storage")
 
-## User selects the specific container template they want to download.
-echo "These are the container templates that match your search:"
-select lxc in "${lxc_names[@]}"; do
-  echo "You selected: $lxc"
+choice_index=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 
-  VARS['container_choice']=$lxc
+## Select/assign node_name variable
+NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
 
-  break
-done
+
+## Download new template file using pveam utility
+if [[ $choice_index -eq 1 ]]; then
+
+    ## User inputs search string (ex: ubuntu)
+    search_string=$(create_text_entry -t "LXC Template Search" -s "Search for available lxc templates:")
+
+    ## See which templates are available:
+    ## Create list of available templates based on search_string
+    mapfile -t available_lxc_templates < <(pveam available | grep -i $search_string)
+    length=${#available_lxc_templates[@]}
+    ## Holds list of matching template names
+    lxc_names=()
+    for ((i=0; i<$length; i++)); do
+    IFS='        ' read -ra split_line <<< "${available_lxc_templates[$i]}"
+    if [[ -n ${split_line[1]} ]]; then
+    echo "Adding ${split_line[1]} to the list"
+        lxc_names+=("${split_line[1]}")
+    fi
+    done
+
+    ## User selects the specific container template they want to download.
+    echo "These are the container templates that match your search:"
+    select lxc in "${lxc_names[@]}"; do
+    echo "You selected: $lxc"
+
+    LXC_SETTINGS['container_choice']=$lxc
+
+    break
+    done
+
+## List available templates using pveam utility
+elif [[ $choice_index -eq 2 ]]; then
+
+    ## Please choose storage:
+    LXC_SETTINGS["vm_storage"]=$(user_selection_single -b "Storage Selection" -t "${STORAGE_OPTIONS[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage --output json" -c "storage" -a "1")    
+
+
+
+
+
+
+
+
+
+else
+  echo "Invalid selection. Exiting."
+  exit 1
+fi
+
+
+
+
+
+
 
 ## User chooses node (if there is only one node, it's auto-selected)
 mapfile -t nodes < <(pvesh ls /nodes)
@@ -89,7 +131,7 @@ else
 fi
 
 ## Create list of available storage choices for the selected node
-mapfile -t storage_list < <(pvesh get /nodes/$NODE_NAME/storage -content vztmpl -enabled --noborder --output json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]")
+mapfile -t storage_list < <(pvesh get /nodes/$NODE_NAME/storage -content vztmpl -enabled --output json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]")
 storage_names=()
 for i in "${storage_list[@]}"; do
 
@@ -107,7 +149,7 @@ select STORAGE_NAME in "${storage_names[@]}"; do
 if [[ -n $STORAGE_NAME ]]; then
     echo -e "You have selected: \e[33m$STORAGE_NAME\e[0m"
 
-    VARS["template_storage"]=$STORAGE_NAME
+    LXC_SETTINGS["template_storage"]=$STORAGE_NAME
 
     break
 else
@@ -116,17 +158,17 @@ fi
 done
 
 ## Download the container template to specified storage location
-pveam download ${VARS["template_storage"]} ${VARS["container_choice"]}
+pveam download ${LXC_SETTINGS["template_storage"]} ${LXC_SETTINGS["container_choice"]}
 
 ## Prompt for missing values:
 
 ## Step 1, get vm id from user:
 read -p "Enter the VM ID: " vm_id
-VARS["vmid"]=$vm_id
+LXC_SETTINGS["vmid"]=$vm_id
 
 ## Get hostname
 read -p "Enter the hostname: " hostname
-VARS["hostname"]=$hostname
+LXC_SETTINGS["hostname"]=$hostname
 
 ## Step 2, user chooses storage location for container:
 echo "Select storage location for container:"
@@ -134,7 +176,7 @@ select STORAGE_NAME in "${storage_names[@]}"; do
 if [[ -n $STORAGE_NAME ]]; then
     echo -e "You have selected: \e[33m$STORAGE_NAME\e[0m"
 
-    VARS["vm_storage"]=$STORAGE_NAME
+    LXC_SETTINGS["vm_storage"]=$STORAGE_NAME
 
     break
 else
@@ -143,8 +185,8 @@ fi
 done
 
 ## User chooses the bridge/network for container's network adapter:
-## pvesh get /nodes/$NODE_NAME/network --type any_bridge --noborder --output json | jq -r '.[] | .iface'
-mapfile -t bridges < <(pvesh get /nodes/$NODE_NAME/network --type any_bridge --noborder --output json | jq -r '.[] | .iface')
+## pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json | jq -r '.[] | .iface'
+mapfile -t bridges < <(pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json | jq -r '.[] | .iface')
 echo "Select bridge for container:"
 select bridge in "${bridges[@]}"; do
 
@@ -160,8 +202,8 @@ done
 echo "Start container on boot?"
 select yn in "Yes" "No"; do
   case $yn in
-    Yes ) VARS["onboot"]=1; break;;
-    No ) VARS["onboot"]=0; break;;
+    Yes ) LXC_SETTINGS["onboot"]=1; break;;
+    No ) LXC_SETTINGS["onboot"]=0; break;;
   esac
 done
 
@@ -169,18 +211,18 @@ done
 # echo "Start container after creation?"
 # select yn in "Yes" "No"; do
 #   case $yn in
-#     Yes ) VARS["start"]=1; break;;
-#     No ) VARS["start"]=0; break;;
+#     Yes ) LXC_SETTINGS["start"]=1; break;;
+#     No ) LXC_SETTINGS["start"]=0; break;;
 #   esac
 # done
 
 ## VM starts automatically after creation - user enters terminal session using pct
-VARS["start"]=1
+LXC_SETTINGS["start"]=1
 
 ## Create the container
-## pvesh create /nodes/$NODE_NAME/lxc --vmid ${VARS["vmid"]} --ostemplate "${VARS["template_storage"]}:vztmpl/${VARS["container_choice"]}" --hostname "${VARS["hostname"]}" --cores ${VARS["cores"]} --memory "${VARS["memory"]}" --swap ${VARS["swap"]} --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --onboot ${VARS["onboot"]} --start ${VARS["start"]} --description ${VARS["description"]} --nameserver ${VARS["nameserver"]} --timezone ${VARS["timezone"]} --storage ${VARS["vm_storage"]}torage "${VARS["vm_storage"]}"
-echo "ostemplate choice: ${VARS['template_storage']}:vztmpl/${VARS['container_choice']}"
-pvesh create /nodes/$NODE_NAME/lxc --ostemplate "${VARS['template_storage']}:vztmpl/${VARS['container_choice']}" --vmid "${VARS["vmid"]}" --hostname "${VARS["hostname"]}" --memory "${VARS["memory"]}" --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --description "${VARS["description"]}" --storage "${VARS["vm_storage"]}" --start "${VARS['start']}"
+## pvesh create /nodes/$NODE_NAME/lxc --vmid ${LXC_SETTINGS["vmid"]} --ostemplate "${LXC_SETTINGS["template_storage"]}:vztmpl/${LXC_SETTINGS["container_choice"]}" --hostname "${LXC_SETTINGS["hostname"]}" --cores ${LXC_SETTINGS["cores"]} --memory "${LXC_SETTINGS["memory"]}" --swap ${LXC_SETTINGS["swap"]} --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --onboot ${LXC_SETTINGS["onboot"]} --start ${LXC_SETTINGS["start"]} --description ${LXC_SETTINGS["description"]} --nameserver ${LXC_SETTINGS["nameserver"]} --timezone ${LXC_SETTINGS["timezone"]} --storage ${LXC_SETTINGS["vm_storage"]}torage "${LXC_SETTINGS["vm_storage"]}"
+echo "ostemplate choice: ${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}"
+pvesh create /nodes/$NODE_NAME/lxc --ostemplate "${LXC_SETTINGS['template_storage']}:vztmpl/${LXC_SETTINGS['container_choice']}" --vmid "${LXC_SETTINGS["vmid"]}" --hostname "${LXC_SETTINGS["hostname"]}" --memory "${LXC_SETTINGS["memory"]}" --net0 "name=${NET_ADAPTER_INFO["name"]},bridge=${NET_ADAPTER_INFO["bridge"]},firewall=${NET_ADAPTER_INFO["firewall"]}" --description "${LXC_SETTINGS["description"]}" --storage "${LXC_SETTINGS["vm_storage"]}" --start "${LXC_SETTINGS['start']}"
 
 echo ""
 echo "YOU ARE NOW ENTERING A TERMINAL SESSION ON THE CONTAINER"
@@ -189,4 +231,4 @@ echo ""
 echo "After you've set password, you can use 'exit' to return to proxmox host."
 
 ## Enter terminal session on the container
-pct enter ${VARS["vmid"]}
+pct enter ${LXC_SETTINGS["vmid"]}

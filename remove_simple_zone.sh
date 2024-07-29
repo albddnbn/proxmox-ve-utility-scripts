@@ -8,7 +8,7 @@
 source functions.sh
 
 ## Display user menu selection, if there is only one zone - menu will still be displayed
-# ZONE_CHOICE=$(user_selection_single -t "Select zone to remove:" -p "pvesh get /cluster/sdn/zones --type simple --noborder --output json" -c "zone" -a "0")
+# ZONE_CHOICE=$(user_selection_single -t "Select zone to remove:" -p "pvesh get /cluster/sdn/zones --type simple --output json" -c "zone" -a "0")
 ZONE_CHOICES=$(create_checklist -b "Select zones to remove:" --title "Select zones to remove:" --pvesh "pvesh get /cluster/sdn/zones --type simple --output-format json" -mc "zone" -sc "type")
 dialog --clear
 pvesh get /cluster/sdn/vnets --output json | jq -r '.[] | .zone'
