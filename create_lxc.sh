@@ -225,5 +225,7 @@ dialog \
     --no-collapse \
     --msgbox "You will now enter a terminal session in the container that was created. Please set root/user passwords accordingly." 50 50
 
+pct start ${LXC_SETTINGS["vm_id"]}
+
 ## Enter terminal session on the container
-pct enter ${LXC_SETTINGS["vmid"]}
+pct enter ${LXC_SETTINGS["vm_id"]}
