@@ -1,9 +1,18 @@
 #!/bin/bash
+#
 # Script Name: remove_vms.sh
 # Author: Alex B.
-# Date: 7/26/2024
-# Description: Allows user to check off the VMs/containers they'd like to be purged from the cluster. Depending on whether
-#              the container is qemu or lxc, the qm or pct utility is used (respectively).
+# Description: Presents checklist of VMs and containers to user, destroys selected items.
+# Created: 2024-07-28
+# Version: 1.0
+# Usage: ./remove_vms.sh
+#
+# The script checks whether chosen item is a VM or container and destroys it using the appropriate command-line utility.
+# Script uses the qm and pct command-line utilities to remove VMs and containers from Proxmox VE.
+# 
+# https://pve.proxmox.com/pve-docs/pct.1.html
+# https://pve.proxmox.com/pve-docs/qm.1.html
+#
 source functions.sh
 
 VMS_TO_REMOVE=$(create_checklist -b "Select VMs to remove:" --title "Select VMs to remove:" --pvesh "pvesh get /cluster/resources --type vm --noborder --output-format json" -mc "vmid" -sc "name")

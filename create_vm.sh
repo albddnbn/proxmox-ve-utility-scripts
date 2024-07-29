@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script Name: create_vm.sh
 # Author: Alex B.
-# Date: 7/27/2024
+# Date: 2024-07-28
 # Description: Script creates virtual machine and corresponding SDN/virtual networking elements if specified.
 #              Virtual machine will have two CDs/ISOs attached:
 #                  1. Operating System ISO (Windows, Linux) - virtual machine will boot to this when started.
@@ -87,8 +87,12 @@ VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[10]}"
 VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 
 ## Get VM_NETWORK individually with text entry:
-vm_network_reply=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
-VM_SETTINGS["VM_NETWORK"]="$vm_network_reply"
+# vm_network_reply=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
+# VM_SETTINGS["VM_NETWORK"]="$vm_network_reply"
+
+## Have user enter network/bridge individually:
+vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
+VM_SETTINGS["VM_NETWORK"]=$vm_network_choice
 
 
 declare -A SDN_SETTINGS=(
