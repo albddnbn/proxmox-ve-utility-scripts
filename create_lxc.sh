@@ -12,6 +12,8 @@
 #
 #
 
+source functions.sh
+
 ## Variables used for container creation (# cores, network settings, etc.)
 ## If values are not set - script will prompt user for values during execution.
 declare -A LXC_SETTINGS=(
