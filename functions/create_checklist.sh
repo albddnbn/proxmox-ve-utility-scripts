@@ -5,10 +5,6 @@
 ##         allow the user to make an informed choice. The secondary column in this case would be the VMs name.
 ## Returns chosen items from the main/first column at the moment.
 function create_checklist () {
-    set -Eeuo pipefail
-    trap cleanup SIGINT SIGTERM ERR EXIT
-
-    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
     msg() {
         echo >&2 -e "${1-}"
@@ -42,6 +38,11 @@ Available options:
 -sc, --second_column Secondary column to grab, ex: name
 EOF
 }
+    set -Eeuo pipefail
+    trap cleanup SIGINT SIGTERM ERR EXIT
+
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
 
     while [ "$#" -gt 0 ]; do
         case "$1" in

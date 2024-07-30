@@ -1,11 +1,6 @@
 ## Simple text entry.
 ## Source: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable
 function create_text_entry () {
-    set -Eeuo pipefail
-    trap cleanup SIGINT SIGTERM ERR EXIT
-
-    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-
     msg() {
         echo >&2 -e "${1-}"
     }
@@ -36,6 +31,13 @@ Available options:
 -c, --param     column to search in, ex: zone
 EOF
 }
+
+    set -Eeuo pipefail
+    trap cleanup SIGINT SIGTERM ERR EXIT
+
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+
     while [ "$#" -gt 0 ]; do
         case "$1" in
             -t|--title)

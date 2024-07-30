@@ -1,9 +1,4 @@
 function user_selection_single () {
-    set -Eeuo pipefail
-    trap cleanup SIGINT SIGTERM ERR EXIT
-
-    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-
     msg() {
         echo >&2 -e "${1-}"
     }
@@ -36,7 +31,12 @@ Available options:
 -a, --auto      auto return option if only one
 EOF
     }
-    
+
+    set -Eeuo pipefail
+    trap cleanup SIGINT SIGTERM ERR EXIT
+
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
     while [ "$#" -gt 0 ]; do
         case "$1" in
             -b|--backtitle)
