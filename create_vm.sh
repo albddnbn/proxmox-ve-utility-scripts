@@ -99,6 +99,9 @@ VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 ## Get VM_NETWORK individually with text entry:
 # vm_network_reply=$(create_text_entry -t "Network Interface" -s "Enter network that will be used with VM nw interface:")
 # VM_SETTINGS["VM_NETWORK"]="$vm_network_reply"
+## Select node name (node is auto-selected if there's only one)
+NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
+
 
 ## Have user enter network/bridge individually:
 vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
@@ -181,8 +184,7 @@ done
 ## - main_iso: Windows ISO
 ## - virtio_iso: VirtIO ISO
 ########################################################################################################################
-## Select node name (node is auto-selected if there's only one)
-NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
+
 
 ## Prompt user for STORAGE_OPTIONS values
 for var in "${!STORAGE_OPTIONS[@]}"; do
