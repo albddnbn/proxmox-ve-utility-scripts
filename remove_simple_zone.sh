@@ -10,7 +10,7 @@ source functions.sh
 ## Display user menu selection, if there is only one zone - menu will still be displayed
 # ZONE_CHOICE=$(user_selection_single -t "Select zone to remove:" -p "pvesh get /cluster/sdn/zones --type simple --output json" -c "zone" -a "0")
 ZONE_CHOICES=$(create_checklist -b "Select zones to remove:" --title "Select zones to remove:" --pvesh "pvesh get /cluster/sdn/zones --type simple --output-format json" -mc "zone" -sc "type")
-dialog --clear
+# dialog --clear
 pvesh get /cluster/sdn/vnets --output json | jq -r '.[] | .zone'
 mapfile -t ZONE_CHOICES <<< $(echo $ZONE_CHOICES | tr " " "\n" | sort -u)
 # echo "ZONE_CHOICES: ${ZONE_CHOICES[@]}"
@@ -70,8 +70,10 @@ for single_zone in ${ZONE_CHOICES[@]}; do
     pvesh delete "/cluster/sdn/zones/$single_zone"
 
 done
-
-## Reload networking config:
-pvesh set /cluster/sdn 2>/dev/null &
-pid=$! # Process Id of the previous running command
-run_spinner $pid "Reloading networking config..."
+if [[ -n $ZONE_CHOICES ]]; then
+    # echo "Zones removed: ${ZONE_CHOICES[@]}"
+    ## Reload networking config:
+    pvesh set /cluster/sdn 2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Reloading networking config..."
+fi

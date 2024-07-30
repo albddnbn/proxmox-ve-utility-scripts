@@ -222,7 +222,7 @@ function create_text_entry () {
         esac
     done
     user_input=$(\
-    dialog --title "$title" \
+    dialog --clear --title "$title" \
         --inputbox "$subtext" 8 40 \
         3>&1 1>&2 2>&3 3>&- \
     )
