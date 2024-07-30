@@ -27,7 +27,7 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-for file in "$script_dir/functions/*.sh"; do
+for file in $(ls "$script_dir/functions/*.sh"); do
     source "$file"
 done
 
