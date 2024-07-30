@@ -13,7 +13,8 @@
 # https://pve.proxmox.com/pve-docs/pct.1.html
 # https://pve.proxmox.com/pve-docs/qm.1.html
 #
-set -Eeuo pipefail
+# set -Eeuo pipefail ## Check on this line - https://betterdev.blog/minimal-safe-bash-script-template/
+## Sounded like useful concept but atm its tripping script up.
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

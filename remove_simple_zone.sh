@@ -4,7 +4,8 @@
 ## Works, but terminal output is messy. Need to clean up output and add spinner for each deletion.
 
 # apt install jq dialog -y
-set -Eeuo pipefail
+# set -Eeuo pipefail ## Check on this line - https://betterdev.blog/minimal-safe-bash-script-template/
+## Sounded like useful concept but atm its tripping script up.
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

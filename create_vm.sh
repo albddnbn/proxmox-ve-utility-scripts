@@ -22,15 +22,12 @@
 ## Stage 1 - Preparation
 ## Sourcing functions file, defining associative arrays, ensuring values are set, prompting user when necessary.
 ########################################################################################################################
-set -Eeuo pipefail
+# set -Eeuo pipefail ## Check on this line - https://betterdev.blog/minimal-safe-bash-script-template/
+## Sounded like useful concept but atm its tripping script up.
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 for file in $(ls "$script_dir/functions/"*".sh"); do
-    source "$file"
-done
-
-for file in $(ls "$script_dir/functions/*.sh"); do
     source "$file"
 done
 
@@ -102,7 +99,6 @@ VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 ## Select node name (node is auto-selected if there's only one)
 NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
 
-
 declare -A SDN_SETTINGS=(
   ## Virtual networking:
   ["ZONE_NAME"]="ADLAB"                                     # Ex: testzone
@@ -127,20 +123,26 @@ declare -A chosen_isos=(
 
 dialog --clear
 
+
 ## Secondary check to make sure VM setting variables are filled out.
 # Loop through the VARS array, prompt user for any missing values.
-for var in "${!VM_SETTINGS[@]}"; do
-  if [[ -z "${VM_SETTINGS[$var]}" ]]; then
-    read -p "Enter a value for ${var}: " value
-  fi
-#   ## Strip whitespace from value, if it exists.
-#   ## if var doesn't end with _COMMENT, strip whitespace from value.
-#   if [[ $var != *_COMMENT ]]; then
-#   VM_SETTINGS[$var]="$(echo -e "${value}" | tr -d '[:space:]')"
-#   else
-#   VM_SETTINGS[$var]="${value:-}"
+# for var in "${!VM_SETTINGS[@]}"; do
+#   if [[ -z "${VM_SETTINGS[$var]}" ]]; then
+
+#     ## VM NETWORK doesn't have to be filled in yet:
+#     if [ "$var" == "VM_NETWORK" ]; then
+#       continue
+#     fi
+#     read -p "Enter a value for ${var}: " value
 #   fi
-done
+# #   ## Strip whitespace from value, if it exists.
+# #   ## if var doesn't end with _COMMENT, strip whitespace from value.
+# #   if [[ $var != *_COMMENT ]]; then
+# #   VM_SETTINGS[$var]="$(echo -e "${value}" | tr -d '[:space:]')"
+# #   else
+# #   VM_SETTINGS[$var]="${value:-}"
+# #   fi
+# done
 
 ########################################################################################################################
 ## Stage 2 - Confirmation & Error checking
@@ -169,7 +171,6 @@ while [ "$vm_id_open" == "no" ]; do
 
   dialog --clear
 done
-
 ########################################################################################################################
 ## Stage 3 - Collection of storage options and ISOs
 ## Storage locations include:
@@ -179,7 +180,6 @@ done
 ## - main_iso: Windows ISO
 ## - virtio_iso: VirtIO ISO
 ########################################################################################################################
-
 
 ## Prompt user for STORAGE_OPTIONS values
 for var in "${!STORAGE_OPTIONS[@]}"; do
