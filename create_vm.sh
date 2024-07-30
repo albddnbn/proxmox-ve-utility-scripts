@@ -103,11 +103,6 @@ VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[11]}"
 NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -p "pvesh get /nodes --output json" -c "node" -a "1")
 
 
-## Have user enter network/bridge individually:
-vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
-VM_SETTINGS["VM_NETWORK"]=$vm_network_choice
-
-
 declare -A SDN_SETTINGS=(
   ## Virtual networking:
   ["ZONE_NAME"]="ADLAB"                                     # Ex: testzone
@@ -276,6 +271,10 @@ if [ "$dialog_response" == "0" ]; then
     run_spinner $pid "Reloading Network Config SDN"
 
 fi
+
+## Have user enter network/bridge individually:
+vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
+VM_SETTINGS["VM_NETWORK"]=$vm_network_choice
 
 ## Creates a vm using specified ISO(s) and storage locations.
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
