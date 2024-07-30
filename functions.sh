@@ -35,7 +35,7 @@ function user_selection_single () {
 
     #apt install jq dialog -y 2>&1 >/dev/null
 
-    cmd=(dialog --keep-tite --backtitle "$back_title" --title "$menu_title" --menu "$menu_title" 22 76 16)
+    cmd=(dialog --clear --backtitle "$back_title" --title "$menu_title" --menu "$menu_title" 22 76 16)
     # echo "cmd: ${cmd[@]}"
     count=0
 
@@ -160,7 +160,7 @@ function create_checklist () {
         esac
     done
 
-    cmd=(dialog --separate-output --checklist \"$menu_title\" 22 76 16)
+    cmd=(dialog --clear --separate-output --checklist \"$menu_title\" 22 76 16)
     # echo "cmd: ${cmd[@]}"
 
     formatted_checklist_options=()
