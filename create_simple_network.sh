@@ -3,8 +3,12 @@
 # Author: Alex B.
 # Date: 2024-07-29
 # Description: Script creates simple zone, vnet, and subnet in Proxmox VE.
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
 
-source functions.sh
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+source "$script_dir/functions/*.sh"
 
 ## ZONE_NAME=$(create_text_entry -t "Create Simple Zone" -s "Enter zone name:")
 ZONE_NAME=""

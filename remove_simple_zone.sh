@@ -4,8 +4,12 @@
 ## Works, but terminal output is messy. Need to clean up output and add spinner for each deletion.
 
 # apt install jq dialog -y
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
 
-source functions.sh
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+source "$script_dir/functions/*.sh"
 
 ## Display user menu selection, if there is only one zone - menu will still be displayed
 # ZONE_CHOICE=$(user_selection_single -t "Select zone to remove:" -p "pvesh get /cluster/sdn/zones --type simple --output json" -c "zone" -a "0")

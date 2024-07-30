@@ -11,8 +11,12 @@
 # https://pve.proxmox.com/pve-docs/pveam.1.html
 #
 #
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
 
-source functions.sh
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+source "$script_dir/functions/*.sh"
 
 ## Variables used for container creation (# cores, network settings, etc.)
 ## If values are not set - script will prompt user for values during execution.

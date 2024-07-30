@@ -22,7 +22,12 @@
 ## Stage 1 - Preparation
 ## Sourcing functions file, defining associative arrays, ensuring values are set, prompting user when necessary.
 ########################################################################################################################
-source functions.sh
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+source "$script_dir/functions/*.sh"
 
 declare -A VM_SETTINGS=(
   ## Details for VM creation:
