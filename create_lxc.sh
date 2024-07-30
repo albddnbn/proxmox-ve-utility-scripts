@@ -16,8 +16,9 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-source "$script_dir/functions/*.sh"
-
+for file in "$script_dir/functions/*.sh"; do
+    source "$file"
+done
 ## Variables used for container creation (# cores, network settings, etc.)
 ## If values are not set - script will prompt user for values during execution.
 declare -A LXC_SETTINGS=(

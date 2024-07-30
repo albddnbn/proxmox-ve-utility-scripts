@@ -21,6 +21,7 @@ function check_pve_item () {
         trap - SIGINT SIGTERM ERR EXIT
         # script cleanup here
     }
+    
     usage() {
 cat << EOF # remove the space between << and EOF, this is due to web plugin issue
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p|--pvesh pvesh_cmd -s|--search search_string -c|--column column_to_grab
@@ -61,9 +62,6 @@ EOF
         esac
     done
 
-    ## Source files in the functions directory:
-    source "$script_dir/*.sh"
-    
     ## Get listing from api endpoint:
     mapfile -t pve_api_listing <<< $(eval "$pvesh_cmd" | jq -r ".[] | .$column_to_grab" | sort | grep "$search_string")
     echo "${pve_api_listing[@]}"
