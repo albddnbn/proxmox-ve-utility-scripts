@@ -1,10 +1,6 @@
 ## Check if item exists using given pvesh command, search string, and column to grab:
 # Ex: check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "test" -c "name"
 function check_pve_item () {
-    set -Eeuo pipefail
-    trap cleanup SIGINT SIGTERM ERR EXIT
-
-    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
     msg() {
         echo >&2 -e "${1-}"
@@ -36,6 +32,12 @@ Available options:
 -c, --param     column to search in, ex: zone
 EOF
 }
+
+    set -Eeuo pipefail
+    trap cleanup SIGINT SIGTERM ERR EXIT
+
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
 
     while [ "$#" -gt 0 ]; do
         case "$1" in
