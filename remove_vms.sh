@@ -18,7 +18,10 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-source "$script_dir/functions/*.sh"
+for file in "$script_dir/functions/*.sh"; do
+    source "$file"
+done
+
 # source functions.sh
 
 VMS_TO_REMOVE=$(create_checklist -b "Select VMs to remove:" --title "Select VMs to remove:" --pvesh "pvesh get /cluster/resources --type vm --noborder --output-format json" -mc "vmid" -sc "name")

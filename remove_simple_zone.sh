@@ -9,7 +9,9 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-source "$script_dir/functions/*.sh"
+for file in "$script_dir/functions/*.sh"; do
+    source "$file"
+done
 
 ## Display user menu selection, if there is only one zone - menu will still be displayed
 # ZONE_CHOICE=$(user_selection_single -t "Select zone to remove:" -p "pvesh get /cluster/sdn/zones --type simple --output json" -c "zone" -a "0")
