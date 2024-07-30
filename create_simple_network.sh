@@ -4,11 +4,10 @@
 # Date: 2024-07-29
 # Description: Script creates simple zone, vnet, and subnet in Proxmox VE.
 set -Eeuo pipefail
-trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-for file in $(ls "$script_dir/functions/*.sh"); do
+for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
 

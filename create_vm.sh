@@ -23,9 +23,12 @@
 ## Sourcing functions file, defining associative arrays, ensuring values are set, prompting user when necessary.
 ########################################################################################################################
 set -Eeuo pipefail
-trap cleanup SIGINT SIGTERM ERR EXIT
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+for file in $(ls "$script_dir/functions/"*".sh"); do
+    source "$file"
+done
 
 for file in $(ls "$script_dir/functions/*.sh"); do
     source "$file"
