@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Script Name: remove_vms.sh
+# Script Name: rm_vm.sh
 # Author: Alex B.
 # Description: Presents checklist of VMs and containers to user, destroys selected items.
 # Date: 2024-07-28
-# Usage: ./remove_vms.sh
+# Usage: ./rm_vm.sh
 #
 # The script checks whether chosen item is a VM or container and destroys it using the appropriate command-line utility.
 # Script uses the qm and pct command-line utilities to remove VMs and containers from Proxmox VE.

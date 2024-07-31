@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Script Name: create_network.sh
+# Script Name: new_network.sh
 # Author: Alex B.
 # Description: Script creates simple zone, vnet, and subnet in Proxmox VE.
 # Date: 2024-07-30
-# Usage: ./create_simple_network.sh
+# Usage: ./new_network.sh
 #
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:

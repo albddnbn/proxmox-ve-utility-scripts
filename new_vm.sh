@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Script Name: create_vm.sh
+# Script Name: new_vm.sh
 # Author: Alex B.
 # Date: 2024-07-28
 # Description: Script creates virtual machine and corresponding SDN/virtual networking elements if specified.
 #              Virtual machine will have two CDs/ISOs attached:
 #                  1. Operating System ISO (Windows, Linux) - virtual machine will boot to this when started.
 #                  2. Secondary ISO - such as VirtIO or other drivers.
+# Usage: ./new_vm.sh
 # Notes:
 # - dc-vm-rules.txt - contains firewall rules for a WINDOWS DOMAIN CONTROLLER VM.
 # - Virtual machine hardware settings derived from 'known good' recommendations:

@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Script Name: remove_simple_zone.sh
+# Script Name: rm_zone.sh
 # Author: Alex B.
 # Description: Script will present checklist of zones, deletes chosen zones and their contents (subnets/vnets).
 # Date: 2024-07-30
-# Usage: ./remove_simple_zone.sh
+# Usage: ./rm_zone.sh
 # 
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:
