@@ -1,11 +1,16 @@
 #!/bin/bash
+#
 # Script Name: create_network.sh
 # Author: Alex B.
-# Date: 2024-07-29
 # Description: Script creates simple zone, vnet, and subnet in Proxmox VE.
-# set -Eeuo pipefail ## Check on this line - https://betterdev.blog/minimal-safe-bash-script-template/
-## Sounded like useful concept but atm its tripping script up.
+# Date: 2024-07-30
+# Usage: ./create_simple_network.sh
+#
+# ---------------------------------------------------------------------------------------------------------------------
+# To Do:
+# - Learn more about different networking options through Proxmox and incorporate them into script.
 
+## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 for file in $(ls "$script_dir/functions/"*".sh"); do

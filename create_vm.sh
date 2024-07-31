@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Script Name: create_vm.sh
 # Author: Alex B.
 # Date: 2024-07-28
@@ -12,19 +13,17 @@
 #     https://4sysops.com/archives/create-a-windows-vm-in-proxmox-ve/
 #     https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
 #
+# ---------------------------------------------------------------------------------------------------------------------
 # To Do:
-# - create firewall rules file for Windows client VM, offer user option.
-# - implement error-checking for IP addresses, prefixes, subnet config, etc.
-#     Random generation option for private subnet config?
-# - cloud-init
+# - Look into cloud-init or other options for efficiently configuring VMs.
+# - Create firewall rules files for other situations (windows client, basic linux server, etc.) 
 
 ########################################################################################################################
 ## Stage 1 - Preparation
 ## Sourcing functions file, defining associative arrays, ensuring values are set, prompting user when necessary.
 ########################################################################################################################
-# set -Eeuo pipefail ## Check on this line - https://betterdev.blog/minimal-safe-bash-script-template/
-## Sounded like useful concept but atm its tripping script up.
 
+## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 for file in $(ls "$script_dir/functions/"*".sh"); do
@@ -274,7 +273,7 @@ fi
 
 ## Have user enter network/bridge individually:
 vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
-VM_SETTINGS["VM_NETWORK"]=$vm_network_choice
+VM_SETTINGS["VM_NETWORK"]=$vm_network_reply
 
 ## Creates a vm using specified ISO(s) and storage locations.
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
@@ -303,39 +302,39 @@ dialog --clear
 if [ "$dialog_response" == "0" ]; then
 
     ## Check if aliases already exist.
-    alias_keys=('MACHINE_ALIAS')
-    for alias_key_name in "${alias_keys[@]}"; do
-        alias_open="no"
-        while [ "$alias_open" == "no" ]; do
-        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
+    # alias_keys=('MACHINE_ALIAS')
+    # for alias_key_name in "${alias_keys[@]}"; do
+    #     alias_open="no"
+    #     while [ "$alias_open" == "no" ]; do
+    #     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
 
-        if [ -z "$alias_check" ]; then
-            alias_open="yes"
-        else
-            ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-            new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-            VM_SETTINGS[$alias_key_name]=$new_alias
-        fi
-        dialog --clear
-        done
-    done
+    #     if [ -z "$alias_check" ]; then
+    #         alias_open="yes"
+    #     else
+    #         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+    #         new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+    #         VM_SETTINGS[$alias_key_name]=$new_alias
+    #     fi
+    #     dialog --clear
+    #     done
+    # done
 
-    alias_keys=('LAN_ALIAS')
-    for alias_key_name in "${alias_keys[@]}"; do
-        alias_open="no"
-        while [ "$alias_open" == "no" ]; do
-        alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
+    # alias_keys=('LAN_ALIAS')
+    # for alias_key_name in "${alias_keys[@]}"; do
+    #     alias_open="no"
+    #     while [ "$alias_open" == "no" ]; do
+    #     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
 
-        if [ -z "$alias_check" ]; then
-            alias_open="yes"
-        else
-            ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-            new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
-            SDN_SETTINGS[$alias_key_name]=$new_alias
-        fi
-        dialog --clear
-        done
-    done
+    #     if [ -z "$alias_check" ]; then
+    #         alias_open="yes"
+    #     else
+    #         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+    #         new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+    #         SDN_SETTINGS[$alias_key_name]=$new_alias
+    #     fi
+    #     dialog --clear
+    #     done
+    # done
 
 
 
