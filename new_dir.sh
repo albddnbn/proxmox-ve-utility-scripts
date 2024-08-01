@@ -36,7 +36,7 @@ count=0
 
 options=()
 
-for single_option in "${$uninitialized_disks[@]}"; do
+for single_option in "${uninitialized_disks[@]}"; do
     # echo "single_option: $single_option"
     added_string="$((++count)) "$single_option""
     # matching_options+=($single_option)
