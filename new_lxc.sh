@@ -147,7 +147,7 @@ VALUES=$(dialog --ok-label "Submit" \
     --title "Proxmox LXC Settings" \
     --form "Confirm container settings:" \
 25 80 0 \
-    "Container choice:" 1 1	"${LXC_SETTINGS['container_choice']}" 	1 20 50 0 \
+    "Container choice:" 1 1	"${LXC_SETTINGS['container_choice']}" 	1 20 100 0 \
     "Cores:"    2 1	"${LXC_SETTINGS['cores']}"  	2 20 50 0 \
     "Description:"    3 1	"${LXC_SETTINGS['description']}"  	3 20 50 0 \
     "Hostname:"     4 1	"${LXC_SETTINGS['hostname']}" 	4 20 50 0 \
