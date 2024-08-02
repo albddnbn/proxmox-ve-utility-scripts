@@ -126,7 +126,10 @@ elif [[ $choice_index -eq 2 ]]; then
     user_container_choice=$(user_selection_single -b "LXC Selection" -t "Please choose storage to check for template file::" -p "pvesh get /nodes/$NODE_NAME/storage --output json" -c "storage" -a "1")    
     LXC_SETTINGS["template_storage"]="${user_container_choice}"
 
-    user_container_choice=$(user_selection_single -b "LXC Selection" -t "Please choose template file:" -p "pvesh get /nodes/$NODE_NAME/storage/$user_container_choice/content --output json" -c "volid" -a "1")
+    ## try to only display options that have .tar in them:
+
+
+    user_container_choice=$(user_selection_single -b "LXC Selection" -t "Please choose template file:" -p "pvesh get /nodes/$NODE_NAME/storage/$user_container_choice/content --content vztmpl --output json" -c "volid" -a "1")
     
     LXC_SETTINGS["container_choice"]="${user_container_choice}"
 
