@@ -271,11 +271,14 @@ fi
 vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please select network for VM:" -p "pvesh get /nodes/$NODE_NAME/network --type any_bridge --output json" -c "iface" -a "1")
 VM_SETTINGS["VM_NETWORK"]=$vm_network_reply
 
+## Network adapter type.
+NETWORK_ADAPTER_TYPE = "e1000" # can be set to e1000 for intel e1000, other options as well
+
 ## Creates a vm using specified ISO(s) and storage locations.
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
 pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['VM_ID']} -name "${VM_SETTINGS['VM_NAME']}" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
       -memory 8192 -cpu cputype=x86-64-v2-AES -cores 2 -sockets 2 -cdrom "${chosen_isos['main_iso']}" \
-      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "virtio,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
+      -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "$NETWORK_ADAPTER_TYPE,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
       -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
       -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
       -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0" 2>/dev/null &
