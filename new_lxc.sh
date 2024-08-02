@@ -13,6 +13,7 @@
 # To Do:
 # - Check on possibility of setting password more efficiently but still securely.
 # - Check on container config options.
+# - Have choices only return *.tar* files where necessary.
 
 
 ## Source functions from functions dir.
@@ -71,13 +72,13 @@ if [[ $choice_index -eq 1 ]]; then
     ## Create list of available templates based on search_string
     mapfile -t available_lxc_templates < <(pveam available | grep -i $search_string)
     length=${#available_lxc_templates[@]}
-    echo "available_lxc_templates: ${available_lxc_templates[@]}"
+    # echo "available_lxc_templates: ${available_lxc_templates[@]}"
     ## Holds list of matching template names
     lxc_names=()
     for ((i=0; i<$length; i++)); do
     IFS='        ' read -ra split_line <<< "${available_lxc_templates[$i]}"
     if [[ -n ${split_line[1]} ]]; then
-    echo "Adding ${split_line[1]} to the list"
+    # echo "Adding ${split_line[1]} to the list"
         lxc_names+=("${split_line[1]}")
     fi
     done
@@ -90,7 +91,7 @@ if [[ $choice_index -eq 1 ]]; then
     for single_option in "${lxc_names[@]}"; do
         # echo "single_option: $single_option"
         added_string="$((++count)) "$single_option""
-        echo "added_string: $added_string"
+        # echo "added_string: $added_string"
         lxc_menu_options+=($added_string)
     done
 
@@ -100,10 +101,10 @@ if [[ $choice_index -eq 1 ]]; then
         ## subtract one from final_choice to get index
         final_choice=$((final_choice-1))
         ## 'return' the selected option
-        echo "${lxc_names[$final_choice]}"
+        # echo "${lxc_names[$final_choice]}"
         LXC_SETTINGS["container_choice"]="${lxc_names[$final_choice]}"
     else
-        echo "$lxc_names"
+        # echo "$lxc_names"
         LXC_SETTINGS["container_choice"]="${lxc_names[0]}"
     fi
 
@@ -192,7 +193,7 @@ NET_ADAPTER_INFO["bridge"]=$vm_network_choice
 ## This loop ensures the VM ID is not taken.
 vm_id_open="no"
 while [ "$vm_id_open" == "no" ]; do
-  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${LXC_SETTINGS[vm_id]}" -c "id")
+  vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${LXC_SETTINGS['vm_id']}" -c "id")
   vm_ids_separated=()
   ## Separate out the ID #s using cut -d '/' -f 2
   ## the items originally look like 'qemu/101' or 'lxc/102' so we have to chop off the 'container type'
@@ -201,16 +202,22 @@ while [ "$vm_id_open" == "no" ]; do
   done;
 
   ## Check vm_ids_separated for exact match of VARS[vm_id]
-  exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "${LXC_SETTINGS[vm_id]}")
+  exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "${LXC_SETTINGS['vm_id']}")
   if [ -z "$exact_match" ]; then
     vm_id_open="yes"
   else
     ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-    new_vm_id=$(dialog --inputbox "VM ID ${LXC_SETTINGS[vm_id]} is already in use. Please select a new VM ID:" 0 0 3>&1 1>&2 2>&3 3>&-)
+    new_vm_id=$(dialog --inputbox "VM ID ${LXC_SETTINGS['vm_id']} is already in use. Please select a new VM ID:" 0 0 3>&1 1>&2 2>&3 3>&-)
     LXC_SETTINGS["vm_id"]=$new_vm_id
   fi
   dialog --clear
 done
+
+# cmd=(create /nodes/$NODE_NAME/lxc -ostemplate "${LXC_SETTINGS['ostemplate']}" \
+#     -vmid "${LXC_SETTINGS['vm_id']}" -hostname "${LXC_SETTINGS['hostname']}" -memory "${LXC_SETTINGS['memory']}" \
+#     -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']}" \
+#     -description "${LXC_SETTINGS['description']}" -storage "${LXC_SETTINGS['vm_storage']}")
+# echo "cmd: ${cmd[@]}"
 
 ########################################################################################################################
 ## Container creation:
@@ -227,7 +234,7 @@ dialog \
     --backtitle "Terminal Session" \
     --title "Now entering terminal session.." \
     --no-collapse \
-    --msgbox "You will now enter a terminal session in the container that was created. Please set root/user passwords accordingly." 50 50
+    --msgbox "\nYou will now enter a terminal session in the container that was created. Please set root/user passwords accordingly." 5 50
 
 pct start ${LXC_SETTINGS["vm_id"]}
 
