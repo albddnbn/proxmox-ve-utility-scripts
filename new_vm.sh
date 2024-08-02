@@ -188,7 +188,7 @@ done;
 
 ## User is prompted to select Windows and VirtIO isos
 for var in "${!chosen_isos[@]}"; do
-  chosen_isos[$var]=$(user_selection_single -b "ISO Selection" -t "${chosen_isos[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage/${STORAGE_OPTIONS['ISO_STORAGE']}/content --output json" -c "volid" -a "1")
+  chosen_isos[$var]=$(user_selection_single -b "ISO Selection" -t "${chosen_isos[$var]}" -p "pvesh get /nodes/$NODE_NAME/storage/${STORAGE_OPTIONS['ISO_STORAGE']}/content --content iso --output json" -c "volid" -a "1")
 done;
 
 ########################################################################################################################
