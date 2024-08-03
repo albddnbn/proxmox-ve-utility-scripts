@@ -272,7 +272,7 @@ vm_network_reply=$(user_selection_single -b "Network Selection" -t "Please selec
 VM_SETTINGS["VM_NETWORK"]=$vm_network_reply
 
 ## Network adapter type.
-NETWORK_ADAPTER_TYPE="e1000" # can be set to e1000 for intel e1000, other options as well
+NETWORK_ADAPTER_TYPE="e1000" # Some example options include: e1000, virtio e1000e. There are likely options for Realtek and VMWare adapters as well.
 
 ## Creates a vm using specified ISO(s) and storage locations.
 # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
