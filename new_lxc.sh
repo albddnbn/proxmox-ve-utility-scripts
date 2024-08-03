@@ -34,7 +34,6 @@ declare -A LXC_SETTINGS=(
   ["nameserver"]="8.8.8.8"
   ["onboot"]=0
   ["ostemplate"]=""
-#   ["insecure_pw"]="Somepass1" ## The first thing to do after container creation is set a secure password.
   ["start"]=0
   ["vm_storage"]=""
   ["template_storage"]=""
@@ -72,7 +71,6 @@ if [[ $choice_index -eq 1 ]]; then
     ## Create list of available templates based on search_string
     mapfile -t available_lxc_templates < <(pveam available | grep -i $search_string)
     length=${#available_lxc_templates[@]}
-    # echo "available_lxc_templates: ${available_lxc_templates[@]}"
     ## Holds list of matching template names
     lxc_names=()
     for ((i=0; i<$length; i++)); do
@@ -89,9 +87,7 @@ if [[ $choice_index -eq 1 ]]; then
     count=0
     lxc_menu_options=()
     for single_option in "${lxc_names[@]}"; do
-        # echo "single_option: $single_option"
         added_string="$((++count)) "$single_option""
-        # echo "added_string: $added_string"
         lxc_menu_options+=($added_string)
     done
 
@@ -101,10 +97,8 @@ if [[ $choice_index -eq 1 ]]; then
         ## subtract one from final_choice to get index
         final_choice=$((final_choice-1))
         ## 'return' the selected option
-        # echo "${lxc_names[$final_choice]}"
         LXC_SETTINGS["container_choice"]="${lxc_names[$final_choice]}"
     else
-        # echo "$lxc_names"
         LXC_SETTINGS["container_choice"]="${lxc_names[0]}"
     fi
 
@@ -216,18 +210,12 @@ while [ "$vm_id_open" == "no" ]; do
   dialog --clear
 done
 
-# cmd=(create /nodes/$NODE_NAME/lxc -ostemplate "${LXC_SETTINGS['ostemplate']}" \
-#     -vmid "${LXC_SETTINGS['vm_id']}" -hostname "${LXC_SETTINGS['hostname']}" -memory "${LXC_SETTINGS['memory']}" \
-#     -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']}" \
-#     -description "${LXC_SETTINGS['description']}" -storage "${LXC_SETTINGS['vm_storage']}")
-# echo "cmd: ${cmd[@]}"
-
 ########################################################################################################################
 ## Container creation:
 ########################################################################################################################
 pvesh create /nodes/$NODE_NAME/lxc -ostemplate "${LXC_SETTINGS['ostemplate']}" \
     -vmid "${LXC_SETTINGS['vm_id']}" -hostname "${LXC_SETTINGS['hostname']}" -memory "${LXC_SETTINGS['memory']}" \
-    -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']}" \
+    -net0 "name=${NET_ADAPTER_INFO['name']},bridge=${NET_ADAPTER_INFO['bridge']},firewall=${NET_ADAPTER_INFO['firewall']},ip=dhcp" \
     -description "${LXC_SETTINGS['description']}" -storage "${LXC_SETTINGS['vm_storage']}"
 
 
