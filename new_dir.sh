@@ -95,4 +95,4 @@ fstab_string="LABEL=$PROXMOX_DIR_NAME /mnt/$PROXMOX_DIR_NAME ext4 defaults 0 2"
 echo "$fstab_string" >> /etc/fstab
 
 ## Add storage to Proxmox
-pvesm add dir "$PROXMOX_DIR_NAME" --path "/mnt/$PROXMOX_DIR_NAME" --content rootdir,iso,vztmpl,images,snippets
+pvesm add dir "$PROXMOX_DIR_NAME" --path "/mnt/$PROXMOX_DIR_NAME" --content rootdir,backup,iso,vztmpl,images,snippets
