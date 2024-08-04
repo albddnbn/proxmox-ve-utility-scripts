@@ -33,11 +33,11 @@ VALUES=$(dialog --ok-label "Submit" \
     --title "Virtual Network" \
     --form "Create new virtual network" \
 15 50 0 \
-    "Zone name:" 1 1	"$ZONE_NAME" 	1 10 30 0 \
-    "Zone MTU:"    2 1	"$ZONE_MTU"  	2 10 30 0 \
-    "Vnet name:"    3 1	"$VNET_NAME"  	3 10 30 0 \
-    "Subnet CIDR:"    4 1	"$SUBNET_CIDR"  	4 10 30 0 \
-    "Subnet Gateway:"     5 1	"$SUBNET_GATEWAY" 	5 10 40 0 \
+    "Zone name:" 1 1	"$ZONE_NAME" 	1 20 30 0 \
+    "Zone MTU:"    2 1	"$ZONE_MTU"  	2 20 30 0 \
+    "Vnet name:"    3 1	"$VNET_NAME"  	3 20 30 0 \
+    "Subnet CIDR:"    4 1	"$SUBNET_CIDR"  	4 20 30 0 \
+    "Subnet Gateway:"     5 1	"$SUBNET_GATEWAY" 	5 20 40 0 \
 2>&1 1>&3)
 
 # close fd
