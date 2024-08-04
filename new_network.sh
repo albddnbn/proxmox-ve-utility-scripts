@@ -29,9 +29,9 @@ SUBNET_GATEWAY="10.0.0.1"
 
 exec 3>&1
 VALUES=$(dialog --ok-label "Submit" \
-    --backtitle "Linux User Managment" \
-    --title "Useradd" \
-    --form "Create a new user" \
+    --backtitle "Virtual Network" \
+    --title "Virtual Network" \
+    --form "Create new virtual network" \
 15 50 0 \
     "Zone name:" 1 1	"$ZONE_NAME" 	1 10 30 0 \
     "Zone MTU:"    2 1	"$ZONE_MTU"  	2 10 30 0 \
