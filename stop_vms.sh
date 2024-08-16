@@ -28,13 +28,13 @@ for single_vm in $VMS_TO_START; do
         ## destroy the vm
         qm shutdown $single_vm --forceStop 2>/dev/null &
         pid=$! # Process Id of the previous running command
-        run_spinner $pid "Starting VM: $single_vm"
+        run_spinner $pid "Shutting down VM: $single_vm"
 
     elif [[ $container_type == "lxc" ]]; then
         echo "Starting LXC: $single_vm"
         pct shutdown $single_vm --forceStop 2>/dev/null &
         pid=$! # Process Id of the previous running command
-        run_spinner $pid "Starting VM: $single_vm"
+        run_spinner $pid "Shutting down container: $single_vm"
     else
         echo "Unknown container type: $container_type"
     fi
