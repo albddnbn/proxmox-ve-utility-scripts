@@ -12,7 +12,7 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
 
-VMS_TO_START=$(create_checklist -b "Select VMs to remove:" --title "Select VMs to remove:" --pvesh "pvesh get /cluster/resources --type vm --noborder --output-format json" -mc "vmid" -sc "name")
+VMS_TO_START=$(create_checklist -b "Select VMs to start:" --title "Select VMs to start:" --pvesh "pvesh get /cluster/resources --type vm --noborder --output-format json" -mc "vmid" -sc "name")
 dialog --clear
 for single_vm in $VMS_TO_START; do
 
