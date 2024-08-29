@@ -25,14 +25,14 @@ for single_vm in $VMS_TO_START; do
     # read -p "Container type: $container_type"
 
     if [[ $container_type == "qemu" ]]; then
-        ## destroy the vm
-        qm shutdown $single_vm --forceStop 2>/dev/null &
+        ## destroy the vm (w or w/o skiplock)
+        qm shutdown $single_vm --forceStop --timeout 20 2>/dev/null &
         pid=$! # Process Id of the previous running command
         run_spinner $pid "Shutting down VM: $single_vm"
 
     elif [[ $container_type == "lxc" ]]; then
         echo "Starting LXC: $single_vm"
-        pct shutdown $single_vm --forceStop 2>/dev/null &
+        pct shutdown $single_vm --forceStop --timeout 20 2>/dev/null &
         pid=$! # Process Id of the previous running command
         run_spinner $pid "Shutting down container: $single_vm"
     else
