@@ -4,6 +4,7 @@ enable: 1
 
 [RULES]
 
+IN ACCEPT -source dc/(($LAN_ALIAS$)) -dest dc/(($LAN_ALIAS$)) -p tcp -dport 9800:9801 -sport 49152:65535 -log nolog # MDT Monitoring tcp/9800/9801
 IN ACCEPT -p tcp -dport 547 -sport 546 -log nolog # DHCPv6
 IN ACCEPT -p udp -dport 547 -sport 546 -log nolog # DHCPv6
 IN ACCEPT -source 0.0.0.0/0 -dest 0.0.0.0/0 -p udp -dport 67 -sport 68 -log nolog # DHCP udp/68 > udp/67
