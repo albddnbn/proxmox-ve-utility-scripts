@@ -3,9 +3,10 @@
 # Script Name: new_vm.sh
 # Author: Alex B.
 # Date: 2024-07-28
-# Description: Scripts creates basic PVE VM, using specified resource allocations, and attaching specified OS/other disks as IDEs.
-#               1. First iso selection should be VirtIO drivers iso (if necessary)
-#               2. Second iso selection = main OS iso, used as first boot option
+# Description: Script creates virtual machine and corresponding SDN/virtual networking elements if specified.
+#              Virtual machine will have two CDs/ISOs attached:
+#                  1. Operating System ISO (Windows, Linux) - virtual machine will boot to this when started.
+#                  2. Secondary ISO - such as VirtIO or other drivers.
 # Usage: ./new_vm.sh
 # Notes:
 # - dc-vm-rules.txt - contains firewall rules for a WINDOWS DOMAIN CONTROLLER VM.
@@ -30,26 +31,35 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
 
+echo -n "Enter Domain Letter"
+read domain_letter
+
+echo -n "Enter VM ID"
+read vm_id
+
+ip_num="${vm_id:0:1}"
+ip_num=$((ip_num - 1))
+
 declare -A VM_SETTINGS=(
   ## Details for VM creation:
-  ["VM_ID"]="303"                                      # Ex: 101
-  ["VM_NAME"]="lab-pc-02"                            # Ex: lab-dc-01
-  ["NUM_CORES"]=1                                      # Number of CPU cores used by VM                       
+  ["VM_ID"]="${vm_id}"                                      # Ex: 101
+  ["VM_NAME"]="${domain_letter}-dc-01"                            # Ex: lab-dc-01
+  ["NUM_CORES"]=4                                      # Number of CPU cores used by VM                       
   ["NUM_SOCKETS"]=1                                    # Number of CPU sockets used by VM
-  ["MEMORY"]=8192                                     # VM Memory in GB
+  ["MEMORY"]=16384                                     # VM Memory in GB
   ["VM_NETWORK"]=""                                     
   ["FIREWALL_RULES_FILE"]="dc-vm-rules.txt"
 
   ## 'Aliases' used for firewall rules/elsewhere in Proxmox OS
-  ["MACHINE_ALIAS"]="pc1"                                 # Ex: labdc
-  ["MACHINE_ALIAS_COMMENT"]="Domain controller"            # Ex: Domain Controller
-  ["MACHINE_CIDR"]="10.0.0.3/32"                                  # Ex: 10.0.0.2/32
+  ["MACHINE_ALIAS"]="${domain_letter}dc"                                 # Ex: labdc
+  ["MACHINE_ALIAS_COMMENT"]="${domain_letter^} Domain controller"            # Ex: Domain Controller
+  ["MACHINE_CIDR"]="10.0.${ip_num}.2/32"                                  # Ex: 10.0.0.2/32
   ## Used to replace string with MACHINE_ALIAS in firewall rules file:
   ["MACHINE_REPLACEMENT_STR"]="((\$MACHINE_ALIAS\$))"  # Must change corresponding value in firewall rules file if changed.
 
-  ["LAN_ALIAS"]="winlan1"                              # Ex: lablan
-  ["LAN_COMMENT"]="Domain LAN"                         # Ex: Domain LAN
-  ["LAN_CIDR"]="10.0.0.1/24"                          # Ex: 10.0.0.1/24
+  ["LAN_ALIAS"]="${domain_letter}lan"                              # Ex: lablan
+  ["LAN_COMMENT"]="${domain_letter^} Domain LAN"                         # Ex: Domain LAN
+  ["LAN_CIDR"]="10.0.${ip_num}.1/24"                          # Ex: 10.0.0.1/24
   ## Used to replace string with lan_alias in firewall rules file:
   ["LAN_REPLACEMENT_STR"]="((\$LAN_ALIAS\$))"          # Must change corresponding value in firewall rules file if changed.
   ["VM_HARDDISK_SIZE"]="60"                            # Ex: 60 would create a 60 GB hard disk.
@@ -100,12 +110,12 @@ NODE_NAME=$(user_selection_single -b "Node Selection" -t "Please select node:" -
 
 declare -A SDN_SETTINGS=(
   ## Virtual networking:
-  ["ZONE_NAME"]="ADLAB"                                     # Ex: testzone
-  ["ZONE_COMMENT"]="Test zone 1"                                  # Ex: This is a test zone comment.
-  ["VNET_NAME"]="adnet"                                     # Ex: testvnet
-  ["VNET_ALIAS"]="adnet"                                    # Ex: testvnet
-  ["VNET_SUBNET"]="10.0.0.1/24"                                   # Ex: 10.0.0.0/24
-  ["VNET_GATEWAY"]="10.0.0.1"                                  # Ex: 10.0.0.1
+  ["ZONE_NAME"]="${domain_letter}zone"                                     # Ex: testzone
+  ["ZONE_COMMENT"]="${domain_letter^} Domain Zone"                                  # Ex: This is a test zone comment.
+  ["VNET_NAME"]="${domain_letter}net"                                     # Ex: testvnet
+  ["VNET_ALIAS"]="${domain_letter}net"                                    # Ex: testvnet
+  ["VNET_SUBNET"]="10.0.${ip_num}.1/24"                                   # Ex: 10.0.0.0/24
+  ["VNET_GATEWAY"]="10.0.${ip_num}.1"                                  # Ex: 10.0.0.1
 )
 
 ## Array will contain user's choices for VM storage, as well as where script will look for ISOs to attach to VM.
@@ -121,6 +131,27 @@ declare -A chosen_isos=(
 )
 
 dialog --clear
+
+
+## Secondary check to make sure VM setting variables are filled out.
+# Loop through the VARS array, prompt user for any missing values.
+# for var in "${!VM_SETTINGS[@]}"; do
+#   if [[ -z "${VM_SETTINGS[$var]}" ]]; then
+
+#     ## VM NETWORK doesn't have to be filled in yet:
+#     if [ "$var" == "VM_NETWORK" ]; then
+#       continue
+#     fi
+#     read -p "Enter a value for ${var}: " value
+#   fi
+# #   ## Strip whitespace from value, if it exists.
+# #   ## if var doesn't end with _COMMENT, strip whitespace from value.
+# #   if [[ $var != *_COMMENT ]]; then
+# #   VM_SETTINGS[$var]="$(echo -e "${value}" | tr -d '[:space:]')"
+# #   else
+# #   VM_SETTINGS[$var]="${value:-}"
+# #   fi
+# done
 
 ########################################################################################################################
 ## Stage 2 - Confirmation & Error checking
@@ -266,43 +297,80 @@ run_spinner $pid "Creating VM: ${VM_SETTINGS['VM_NAME']}"
 clear
 ## FIREWALL RULES FOR VM (/etc/pve/firewall)
 ## Alias is created at the datacenter level for domain controller VM
-# msg=$(cat <<EOF
-# Attempt to assign firewall rules for domain controller VM and create network aliases?
-# EOF
-# )
+msg=$(cat <<EOF
+Attempt to assign firewall rules for domain controller VM and create network aliases?
+EOF
+)
 
-# dialog --title "Firewall rules" --yesno "$msg" 0 0
-# dialog_response=$?
+dialog --title "Firewall rules" --yesno "$msg" 0 0
+dialog_response=$?
 
-# dialog --clear
+dialog --clear
 
-# if [ "$dialog_response" == "0" ]; then
+if [ "$dialog_response" == "0" ]; then
 
-#     pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &
-#     pid=$! # Process Id of the previous running command
-#     run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
+    ## Check if aliases already exist.
+    # alias_keys=('MACHINE_ALIAS')
+    # for alias_key_name in "${alias_keys[@]}"; do
+    #     alias_open="no"
+    #     while [ "$alias_open" == "no" ]; do
+    #     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${VM_SETTINGS[$alias_key_name]}" -c "name")
 
-#     echo "Replacing ${VM_SETTINGS['MACHINE_REPLACEMENT_STR']} with ${VM_SETTINGS['MACHINE_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+    #     if [ -z "$alias_check" ]; then
+    #         alias_open="yes"
+    #     else
+    #         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+    #         new_alias=$(dialog --inputbox "Alias ${VM_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+    #         VM_SETTINGS[$alias_key_name]=$new_alias
+    #     fi
+    #     dialog --clear
+    #     done
+    # done
 
-#     ## Using the original firewall rules file, a new firewall rules file is generated in /etc/pve/firewall/ directory
-#     ## using the VMs ID number and inserting the domain controller's alias. .bak is appended to filename.
-#     while read -r line; do
-#     echo "${line//${VM_SETTINGS['MACHINE_REPLACEMENT_STR']}/${VM_SETTINGS['MACHINE_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
-#     done < "${VM_SETTINGS['FIREWALL_RULES_FILE']}"
+    # alias_keys=('LAN_ALIAS')
+    # for alias_key_name in "${alias_keys[@]}"; do
+    #     alias_open="no"
+    #     while [ "$alias_open" == "no" ]; do
+    #     alias_check=$(check_pve_item -p "pvesh get /cluster/firewall/aliases --output json" -s "${SDN_SETTINGS[$alias_key_name]}" -c "name")
 
-#     ## Alias is created at the datacenter for the Domain/LAN network:
-#     pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"  2>/dev/null &
-#     pid=$! # Process Id of the previous running command
-#     run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
+    #     if [ -z "$alias_check" ]; then
+    #         alias_open="yes"
+    #     else
+    #         ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
+    #         new_alias=$(dialog --inputbox "Alias ${SDN_SETTINGS[$alias_key_name]} already in use. Please select another." 0 0 3>&1 1>&2 2>&3 3>&-)
+    #         SDN_SETTINGS[$alias_key_name]=$new_alias
+    #     fi
+    #     dialog --clear
+    #     done
+    # done
 
-#     echo "Replacing ${VM_SETTINGS['LAN_REPLACEMENT_STR']} with ${VM_SETTINGS['LAN_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
 
-#     ## Using the backup file created earlier, the LAN alias is inserted into the firewall rules file.
-#     while read -r line; do
-#     echo "${line//${VM_SETTINGS['LAN_REPLACEMENT_STR']}/${VM_SETTINGS['LAN_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw
-#     done < /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
 
-#     echo "Removing backup file."
-#     rm /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}"  2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
 
-# fi
+    echo "Replacing ${VM_SETTINGS['MACHINE_REPLACEMENT_STR']} with ${VM_SETTINGS['MACHINE_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+
+    ## Using the original firewall rules file, a new firewall rules file is generated in /etc/pve/firewall/ directory
+    ## using the VMs ID number and inserting the domain controller's alias. .bak is appended to filename.
+    while read -r line; do
+    echo "${line//${VM_SETTINGS['MACHINE_REPLACEMENT_STR']}/${VM_SETTINGS['MACHINE_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+    done < "${VM_SETTINGS['FIREWALL_RULES_FILE']}"
+
+    ## Alias is created at the datacenter for the Domain/LAN network:
+    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}"  2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
+
+    echo "Replacing ${VM_SETTINGS['LAN_REPLACEMENT_STR']} with ${VM_SETTINGS['LAN_ALIAS']} in ${VM_SETTINGS['FIREWALL_RULES_FILE']}."
+
+    ## Using the backup file created earlier, the LAN alias is inserted into the firewall rules file.
+    while read -r line; do
+    echo "${line//${VM_SETTINGS['LAN_REPLACEMENT_STR']}/${VM_SETTINGS['LAN_ALIAS']}}" >> /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw
+    done < /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+
+    echo "Removing backup file."
+    rm /etc/pve/firewall/${VM_SETTINGS['VM_ID']}.fw.bak
+
+fi
