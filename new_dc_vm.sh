@@ -62,7 +62,7 @@ declare -A VM_SETTINGS=(
   ["LAN_CIDR"]="10.0.${ip_num}.1/24"                          # Ex: 10.0.0.1/24
   ## Used to replace string with lan_alias in firewall rules file:
   ["LAN_REPLACEMENT_STR"]="((\$LAN_ALIAS\$))"          # Must change corresponding value in firewall rules file if changed.
-  ["VM_HARDDISK_SIZE"]="60"                            # Ex: 60 would create a 60 GB hard disk.
+  ["VM_HARDDISK_SIZE"]="80"                            # Ex: 60 would create a 60 GB hard disk.
 )
 
 # Store data to $VALUES variable
