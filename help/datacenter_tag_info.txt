@@ -1,0 +1,9 @@
+Tag (and a lot of other config info) is stored in:
+--> /etc/pve/datacenter.cfg
+
+There is an option called 'Tag Style Override' - visible in datacenter GUI options, and in .cfg file (if any tags are set)
+Example from datacenter cfg shown below - depicts two tags in use:
+1. ready - color: b0f756, text: 000000
+2. needs-scripts - color: cbd44e, text: ffffff
+
+tag-style: color-map=ready:b0f756:000000;needs-scripts:cbd44e:ffffff
