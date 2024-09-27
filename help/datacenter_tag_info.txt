@@ -7,3 +7,5 @@ Example from datacenter cfg shown below - depicts two tags in use:
 2. needs-scripts - color: cbd44e, text: ffffff
 
 tag-style: color-map=ready:b0f756:000000;needs-scripts:cbd44e:ffffff
+
+**Note - I don't think it's really necessary to script anything with tags, it's pretty quick through the gui.
