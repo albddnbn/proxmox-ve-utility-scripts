@@ -7,15 +7,11 @@
 #              to chosen network.
 # Usage: ./new_vm.sh
 # Notes:
-# - dc-vm-rules.txt - contains firewall rules for a WINDOWS DOMAIN CONTROLLER VM.
 # - Virtual machine hardware settings derived from 'known good' recommendations:
 #     https://4sysops.com/archives/create-a-windows-vm-in-proxmox-ve/
 #     https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
 #
 # ---------------------------------------------------------------------------------------------------------------------
-# To Do:
-# - Look into cloud-init or other options for efficiently configuring VMs.
-# - Create firewall rules files for other situations (windows client, basic linux server, etc.) 
 
 ########################################################################################################################
 ## Stage 1 - Preparation
