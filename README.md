@@ -23,6 +23,7 @@ This project contains a collection of shell scripts designed to make certain tas
 - Automate common tasks
 - Improve system management
 - Enhance productivity
+- Clones!
 
 ## Installation
 
