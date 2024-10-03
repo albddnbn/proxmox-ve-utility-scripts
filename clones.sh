@@ -48,8 +48,8 @@ done
 
 ## 'choices' will amount to a single VM/container ID, chosen by user
 choices=$(eval "${cmd[@]} ${formatted_menu_options[@]}" 2>&1 >/dev/tty)
-
-chosen_vm="${main_results[$choices]}"
+choice_index=$((choices-1))
+chosen_vm="${main_results[$choice_index]}"
 ## get chosen vm hostname - kinda repetitive this way?
 chosen_vm_hostname=$(eval "$pvesh_cmd" | jq -r ".[] | select(.vmid == $chosen_vm) | .name")
 
