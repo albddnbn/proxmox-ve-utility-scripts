@@ -1,35 +1,38 @@
+#!/bin/bash
+#
+# Script Name: clones.sh
+# Author: Alex B.
+# Description: Clones specified VM/Container X number of times. User specifies 'starting' VM ID, which is incremented
+#              upwards by 1 for each clone. This number is also appended to the vm name of the newly created clone.
+# Date: 2024-10-02
+# Usage: ./clones.sh
+#
+# Script uses the qm/pct clone commands. Untested for pct at this point.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
-## choose VM to clone
-# pvesh get /cluster/resources --type vm --noborder --output-format json | jq -r '.[] | {(.vmid|tostring):(.name)}'s
-#VM_TO_CLONE=$(user_selection_single -b "VM Selection" -t "Select VM to clone:" -p "pvesh get /cluster/resources --type vm --noborder --output-format json" -c "node" -a "1")
-btitle="Select VM to clone"
-column_to_grab="vmid"
-secondary_column="name"
-#pvesh_cmd="pvesh get /cluster/resources --type vm --noborder --output-format json | jq -r '.[] | {(.vmid|tostring):(.name)}'"
+
+## User chooses VM/container to clone
+menu_title="Select VM to clone" # title of the dialog menu
+main_col="vmid" # main column, used in display AND as identifying column for VM/containers.
+display_col="name" # used for display purposes - it's easier to identify vm/containers when you have both ID/name
 pvesh_cmd="pvesh get /cluster/resources --type vm --output-format json"
 
-cmd=(dialog --title \"$btitle\" --menu \"$btitle\" 22 76 16)
-# echo "cmd: ${cmd[@]}"
+cmd=(dialog --title \"$menu_title\" --menu \"$menu_title\" 22 76 16) # cmd that generates menu in terminal
 
-formatted_checklist_options=()
-main_col_results=$(eval "$pvesh_cmd" | jq -r ".[] | .$column_to_grab|tostring")
+## For display purposes, a formatted options list is created, each item formatted like this: 'VM_ID VM_NAME'
+formatted_menu_options=()
+main_col_results=$(eval "$pvesh_cmd" | jq -r ".[] | .$main_col|tostring")
 mapfile -t main_results <<< "$main_col_results"
-secondary_column=$(eval "$pvesh_cmd" | jq -r ".[] | .$secondary_column|tostring")
-mapfile -t sec_col_results <<< "$secondary_column"
 
-
-echo "main_col_results: $main_col_results"
-echo "sec_col_results: ${sec_col_results[@]}"
-## Some different ways to format output with jq, I'm putting them here for safekeeping:
-## pvesh get /cluster/resources --type vm --output json | jq '. [] | {(.name): .vmid}'
-## pvesh get /cluster/resources --type vm --output json | jq '. [] | "\(.vmid) \(.name)"'
-## pvesh get /cluster/resources --type vm --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"'
-## results=$(pvesh get /cluster/resources --type vm --output json | jq -r '. [] | "{id: \(.vmid),name: \(.name)}"')
+display_col=$(eval "$pvesh_cmd" | jq -r ".[] | .$display_col|tostring")
+mapfile -t sec_col_results <<< "$display_col"
 
 count=0
 for single_option in $main_col_results; do
@@ -40,24 +43,13 @@ for single_option in $main_col_results; do
     display_name="$single_option ${sec_col_results[$target_index]}"
     formatted_checklist_string="$count \"$display_name\""
     echo "formatted_checklist_string: $formatted_checklist_string"
-    formatted_checklist_options+=($formatted_checklist_string)
+    formatted_menu_options+=($formatted_checklist_string)
 done
 
-# echo "executing cmd: ${cmd[@]} ${formatted_checklist_options[@]}"
-choices=$(eval "${cmd[@]} ${formatted_checklist_options[@]}" 2>&1 >/dev/tty)
+## 'choices' will amount to a single VM/container ID, chosen by user
+choices=$(eval "${cmd[@]} ${formatted_menu_options[@]}" 2>&1 >/dev/tty)
 
-# echo "$choices"
-
-final_results=()
-for choice in $choices; do
-    ## subtract one from final_choice to get index
-    final_choice=$((choice-1))
-    final_results+=("${main_results[$final_choice]}")
-
-done
-
-echo "${final_results[@]}"
-chosen_vm="${final_results[@]}"
+chosen_vm="${main_results[$choices]}"
 ## get chosen vm hostname - kinda repetitive this way?
 chosen_vm_hostname=$(eval "$pvesh_cmd" | jq -r ".[] | select(.vmid == $chosen_vm) | .name")
 
@@ -65,6 +57,7 @@ chosen_vm_hostname=$(eval "$pvesh_cmd" | jq -r ".[] | select(.vmid == $chosen_vm
 NUM_CLONES=$(create_text_entry -t "Number of clones" -s "Enter number of clones to create:")
 
 ## as long as num_clones is a number - proceed:
+## Resource: https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash#3951175
 case $NUM_CLONES in
     ''|*[!0-9]*) proceed='no' ;;
     *) proceed='yes' ;;
@@ -77,7 +70,7 @@ if [ "$proceed" == "yes" ]; then
 
     echo "Creating $NUM_CLONES clones from: $chosen_vm"
 
-    mapfile -t pve_api_listing <<< $(eval "pvesh get /cluster/resources --type vm --output json" | jq -r ".[] | .id" | grep "${final_results[@]}")
+    mapfile -t pve_api_listing <<< $(eval "pvesh get /cluster/resources --type vm --output json" | jq -r ".[] | .id" | grep "$chosen_vm")
 
     container_type=$(echo $pve_api_listing | cut -d '/' -f 1)
 
