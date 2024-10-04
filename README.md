@@ -1,7 +1,7 @@
 # proxmox-ve-utility-scripts
 ![Bash](https://img.shields.io/badge/language-Bash-05c100)
 
-Collection of shell scripts to maximize efficiency when using Proxmox VE.
+Collection of shell scripts to maximize efficiency when using Proxmox VE. Anyone is welcome to use these scripts, but if you run into issues, make improvements, or find them particularly useful - please let me know.
 
 ## Table of Contents
 
