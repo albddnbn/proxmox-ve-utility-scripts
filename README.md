@@ -39,8 +39,10 @@ chmod +x ./*.sh
 
 ```bash
 ## ./<script>.sh
-./create_vm.sh
+./new_vm.sh
 ```
+
+**Reminder: new virtual machines will have firewall enabled on the Network Adapter (and disabled on the virtual machine) by default.**
 
 All scripts in the base directory of the repository can be run without any parameters or arguments. They are designed to be interactive, mostly through the use of bash dialogs.
 
