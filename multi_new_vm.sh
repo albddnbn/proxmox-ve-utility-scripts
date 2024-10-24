@@ -123,41 +123,25 @@ for i in $(seq ${VM_SETTINGS['NUMBER_VMS']}); do
         i="0$i"
     fi
 
-  ## Create VM name
-  virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}${i}"
+    ## Create VM name
+    virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}${i}"
+    # make sure VM ID is avaailable
+    vm_ids=$(pvesh get /cluster/resources --type vm -output json | jq -r '.[] | .vmid')
 
-    ## This search for vm ids is very lengthy..
-    vm_id_open="no"
-    while [ "$vm_id_open" == "no" ]; do
-        vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "${VM_SETTINGS['STARTING_VM_ID']}" -c "id")
-        vm_ids_separated=()
-        ## Separate out the ID #s using cut -d '/' -f 2
-        ## the items originally look like 'qemu/101' or 'lxc/102' so we have to chop off the 'container type'
-        for vm_id_string in $vm_id_check; do
-            vm_ids_separated+=($(echo "$vm_id_string" | cut -d '/' -f 2))
-        done;
-
-        ## Check vm_ids_separated for exact match of VARS[VM_ID]
-        exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "${VM_SETTINGS['STARTING_VM_ID']}")
-        if [ -z "$exact_match" ]; then
-            vm_id_open="yes"
-        else
-            ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-            echo "Setting new vm id: ${VM_SETTINGS['STARTING_VM_ID']}"
-            new_vm_id=$((${VM_SETTINGS['STARTING_VM_ID']} + 1))
-            VM_SETTINGS['STARTING_VM_ID']=$new_vm_id
-            echo "New vm id: ${VM_SETTINGS['STARTING_VM_ID']}"
-        fi
-
-        dialog --clear
+    while [[ ${vm_ids[@]} =~ "${VM_SETTINGS['STARTING_VM_ID']}" ]]; do
+        echo "Setting new vm id: ${VM_SETTINGS['STARTING_VM_ID']}"
+        new_vm_id=$((${VM_SETTINGS['STARTING_VM_ID']} + 1))
+        VM_SETTINGS['STARTING_VM_ID']=$new_vm_id
+        echo "New vm id: ${VM_SETTINGS['STARTING_VM_ID']}"
     done
 
-  ## Creates a vm using specified ISO(s) and storage locations.
-  # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
-  pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['STARTING_VM_ID']} -name "$virtual_machine_name" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
-        -memory 8192 -cpu cputype=x86-64-v2-AES -cores 4 -sockets 1 -cdrom "${chosen_isos['main_iso']}" \
-        -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "$NETWORK_ADAPTER_TYPE,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
-        -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
-        -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
-        -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0"
+
+    ## Creates a vm using specified ISO(s) and storage locations.
+    # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
+    pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['STARTING_VM_ID']} -name "$virtual_machine_name" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
+            -memory 8192 -cpu cputype=x86-64-v2-AES -cores 4 -sockets 1 -cdrom "${chosen_isos['main_iso']}" \
+            -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "$NETWORK_ADAPTER_TYPE,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
+            -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
+            -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
+            -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0"
 done
