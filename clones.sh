@@ -97,7 +97,7 @@ if [ "$proceed" == "yes" ]; then
 
         elif [[ $container_type == "lxc" ]]; then
             echo "Cloning LXC: $chosen_vm"
-            pct clone $chosen_vm $starting_vm_id --name $clone_name
+            pct clone $chosen_vm $starting_vm_id --hostname $clone_name
             #-force -purge 2>/dev/null &
             # pid=$! # Process Id of the previous running command
             # run_spinner $pid "Cloning VM: $chosen_vm"
