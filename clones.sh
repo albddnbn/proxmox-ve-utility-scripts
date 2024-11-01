@@ -78,31 +78,15 @@ if [ "$proceed" == "yes" ]; then
 
         clone_name="${chosen_vm_hostname}-${i}"
 
-        vm_id_open="no"
-        while [ "$vm_id_open" == "no" ]; do
-            vm_id_check=$(check_pve_item -p "pvesh get /cluster/resources --type vm --output json" -s "$starting_vm_id" -c "id")
-            vm_ids_separated=()
-            ## Separate out the ID #s using cut -d '/' -f 2
-            ## the items originally look like 'qemu/101' or 'lxc/102' so we have to chop off the 'container type'
-            for vm_id_string in $vm_id_check; do
-                vm_ids_separated+=($(echo "$vm_id_string" | cut -d '/' -f 2))
-            done;
+        # make sure VM ID is avaailable
+        vm_ids=$(pvesh get /cluster/resources --type vm -output json | jq -r '.[] | .vmid')
 
-            ## Check vm_ids_separated for exact match of VARS[VM_ID]
-            exact_match=$(echo "${vm_ids_separated[@]}" | grep -ow "$starting_vm_id")
-            if [ -z "$exact_match" ]; then
-                vm_id_open="yes"
-            else
-                ## Resource for the redirection part of the command below: https://stackoverflow.com/questions/29222633/bash-dialog-input-in-a-variable#29222709
-                echo "Setting new vm id: $starting_vm_id"
-                new_vm_id=$((starting_vm_id + 1))
-                starting_vm_id=$new_vm_id
-                echo "New vm id: $starting_vm_id"
-            fi
-
-            dialog --clear
+        while [[ ${vm_ids[@]} =~ "$starting_vm_id" ]]; do
+            echo "Setting new vm id: $starting_vm_id"
+            new_vm_id=$(($starting_vm_id + 1))
+            starting_vm_id=$new_vm_id
+            echo "New vm id: $starting_vm_id"
         done
-
 
         if [[ $container_type == "qemu" ]]; then
             ## destroy the vm
@@ -113,7 +97,7 @@ if [ "$proceed" == "yes" ]; then
 
         elif [[ $container_type == "lxc" ]]; then
             echo "Cloning LXC: $chosen_vm"
-            pct clone $chosen_vm 
+            pct clone $chosen_vm $starting_vm_id --name $clone_name
             #-force -purge 2>/dev/null &
             # pid=$! # Process Id of the previous running command
             # run_spinner $pid "Cloning VM: $chosen_vm"
