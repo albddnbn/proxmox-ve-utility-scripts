@@ -13,7 +13,7 @@
 # https://pve.proxmox.com/pve-docs/qm.1.html
 #
 # ---------------------------------------------------------------------------------------------------------------------
-# To Do:
+# To Do: combine pct/qm sections since they use similar arguments.
 
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
@@ -32,36 +32,24 @@ for single_vm in $VMS_TO_REMOVE; do
 
     container_type=$(echo $pve_api_listing | cut -d '/' -f 1)
 
-    # read -p "Container type: $container_type"
-
-    if [[ $container_type == "qemu" ]]; then
-        ## check vm status
-        qm_status=$(qm status $single_vm)
-        if [ $qm_status == *"running"* ]; then
-            qm stop $single_vm 2>/dev/null &
-            pid=$! # Process Id of the previous running command
-            run_spinner $pid "Removing VM: $single_vm"
-        fi
-    
-        ## destroy the vm
-        qm destroy $single_vm -purge 2>/dev/null &
-        pid=$! # Process Id of the previous running command
-        run_spinner $pid "Removing VM: $single_vm"
-
-    elif [[ $container_type == "lxc" ]]; then
-        echo "Removing LXC: $single_vm"
-        ## if container is up - try to stop it
-        pct_status=$(pct status $single_vm)
-        if [ $pct_status == *"running"* ]; then
-            pct stop $single_vm 2>/dev/null &
-            pid=$! # Process Id of the previous running command
-            run_spinner $pid "Removing LXC: $single_vm"
-        fi
-        pct destroy $single_vm -force -purge 2>/dev/null &
-        pid=$! # Process Id of the previous running command
-        run_spinner $pid "Removing VM: $single_vm"
+    if [ $container_type == "qemu" ]; then
+        container_type="qm"
+    elif [ $container_type == "lxc" ]; then
+        container_type="pct"
     else
         echo "Unknown container type: $container_type"
     fi
+
+    dev_status=$(eval "$container_type status $single_vm")
+
+    if [ $dev_status == *"running"*]; then
+        eval "$container_type stop $single_vm" 2>/dev/null &
+        pid=$! # Process Id of the previous running command
+        run_spinner $pid "Removing $container_type: $single_vm"
+    fi
+
+    eval "$container_type destroy $single_vm -purge" 2>/dev/null &
+    pid=$! # Process Id of the previous running command
+    run_spinner $pid "Removing $container_type: $single_vm"
 
 done
