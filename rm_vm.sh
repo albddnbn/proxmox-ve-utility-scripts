@@ -35,6 +35,14 @@ for single_vm in $VMS_TO_REMOVE; do
     # read -p "Container type: $container_type"
 
     if [[ $container_type == "qemu" ]]; then
+        ## check vm status
+        qm_status=$(qm status $single_vm)
+        if [ $qm_status == *"running"* ]; then
+            qm stop $single_vm 2>/dev/null &
+            pid=$! # Process Id of the previous running command
+            run_spinner $pid "Removing VM: $single_vm"
+        fi
+    
         ## destroy the vm
         qm destroy $single_vm -purge 2>/dev/null &
         pid=$! # Process Id of the previous running command
@@ -42,6 +50,13 @@ for single_vm in $VMS_TO_REMOVE; do
 
     elif [[ $container_type == "lxc" ]]; then
         echo "Removing LXC: $single_vm"
+        ## if container is up - try to stop it
+        pct_status=$(pct status $single_vm)
+        if [ $pct_status == *"running"* ]; then
+            pct stop $single_vm 2>/dev/null &
+            pid=$! # Process Id of the previous running command
+            run_spinner $pid "Removing LXC: $single_vm"
+        fi
         pct destroy $single_vm -force -purge 2>/dev/null &
         pid=$! # Process Id of the previous running command
         run_spinner $pid "Removing VM: $single_vm"
