@@ -31,10 +31,10 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
 
-echo -n "Enter Domain Letter"
+echo -n "Enter Letter from A-Z to generate hostname/subnet: "
 read domain_letter
 
-echo -n "Enter VM ID"
+echo -n "Enter VM ID: "
 read vm_id
 
 ip_num="${vm_id:0:1}"
