@@ -123,9 +123,7 @@ for i in $(seq ${VM_SETTINGS['NUMBER_VMS']}); do
         i="0$i"
     fi
 
-    ## Create VM name
     virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}${i}"
-    # make sure VM ID is avaailable
     vm_ids=$(pvesh get /cluster/resources --type vm -output json | jq -r '.[] | .vmid')
 
     while [[ ${vm_ids[@]} =~ "${VM_SETTINGS['STARTING_VM_ID']}" ]]; do
@@ -138,10 +136,12 @@ for i in $(seq ${VM_SETTINGS['NUMBER_VMS']}); do
 
     ## Creates a vm using specified ISO(s) and storage locations.
     # Reference for 'ideal' VM settings: https://davejansen.com/recommended-settings-windows-10-2016-2018-2019-vm-proxmox/
+    #  -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," 
     pvesh create /nodes/$NODE_NAME/qemu -vmid ${VM_SETTINGS['STARTING_VM_ID']} -name "$virtual_machine_name" -storage ${STORAGE_OPTIONS['ISO_STORAGE']} \
             -memory 8192 -cpu cputype=x86-64-v2-AES -cores 4 -sockets 1 -cdrom "${chosen_isos['main_iso']}" \
             -ide1 "${chosen_isos['virtio_iso']},media=cdrom" -net0 "$NETWORK_ADAPTER_TYPE,bridge=${VM_SETTINGS['VM_NETWORK']},firewall=1" \
-            -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 -tpmstate "${STORAGE_OPTIONS['VM_STORAGE']}:4,version=v2.0," \
+            -scsihw virtio-scsi-pci -bios ovmf -machine pc-q35-8.1 \
             -efidisk0 "${STORAGE_OPTIONS['VM_STORAGE']}:1" -bootdisk ide2 -ostype win11 \
             -agent 1 -virtio0 "${STORAGE_OPTIONS['VM_STORAGE']}:${VM_SETTINGS['VM_HARDDISK_SIZE']},iothread=1,format=qcow2" -boot "order=ide2;virtio0;scsi0"
+
 done
