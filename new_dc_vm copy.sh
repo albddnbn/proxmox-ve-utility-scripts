@@ -31,10 +31,19 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
     source "$file"
 done
 
+echo -n "Enter Letter from A-Z to generate hostname: "
+read domain_letter
+
+echo -n "Enter VM ID (will also be used to generate subnet): "
+read vm_id
+
+ip_num="${vm_id:0:1}"
+ip_num=$((ip_num - 1))
+
 declare -A VM_SETTINGS=(
   ## Details for VM creation:
-  ["VM_ID"]=""                                      # Ex: 101
-  ["VM_NAME"]="ad-lab-dc-vm"                            # Ex: lab-dc-01
+  ["VM_ID"]="${vm_id}"                                      # Ex: 101
+  ["VM_NAME"]="${domain_letter}-dc-01"                            # Ex: lab-dc-01
   ["NUM_CORES"]=4                                      # Number of CPU cores used by VM                       
   ["NUM_SOCKETS"]=1                                    # Number of CPU sockets used by VM
   ["MEMORY"]=16384                                     # VM Memory in GB
@@ -42,36 +51,19 @@ declare -A VM_SETTINGS=(
   ["FIREWALL_RULES_FILE"]="dc-vm-rules.txt"
 
   ## 'Aliases' used for firewall rules/elsewhere in Proxmox OS
-  ["MACHINE_ALIAS"]="addcvm"                                 # Ex: labdc
-  ["MACHINE_ALIAS_COMMENT"]="Domain controller VM"            # Ex: Domain Controller
-  ["MACHINE_CIDR"]=""                                  # Ex: 10.0.0.2/32
+  ["MACHINE_ALIAS"]="${domain_letter}dc"                                 # Ex: labdc
+  ["MACHINE_ALIAS_COMMENT"]="${domain_letter^} Domain controller"            # Ex: Domain Controller
+  ["MACHINE_CIDR"]="10.0.${ip_num}.2/32"                                  # Ex: 10.0.0.2/32
   ## Used to replace string with MACHINE_ALIAS in firewall rules file:
   ["MACHINE_REPLACEMENT_STR"]="((\$MACHINE_ALIAS\$))"  # Must change corresponding value in firewall rules file if changed.
 
-  ["LAN_ALIAS"]="addclan"                              # Ex: lablan
-  ["LAN_COMMENT"]="AD Lab Domain LAN"                         # Ex: Domain LAN
-  ["LAN_CIDR"]=""                          # Ex: 10.0.0.1/24
+  ["LAN_ALIAS"]="${domain_letter}lan"                              # Ex: lablan
+  ["LAN_COMMENT"]="${domain_letter^} Domain LAN"                         # Ex: Domain LAN
+  ["LAN_CIDR"]="10.0.${ip_num}.1/24"                          # Ex: 10.0.0.1/24
   ## Used to replace string with lan_alias in firewall rules file:
   ["LAN_REPLACEMENT_STR"]="((\$LAN_ALIAS\$))"          # Must change corresponding value in firewall rules file if changed.
   ["VM_HARDDISK_SIZE"]="80"                            # Ex: 60 would create a 60 GB hard disk.
 )
-
-
-## Confirm settings necessary for VM creation (barring network)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Store data to $VALUES variable
 VALUES=$(dialog --ok-label "Submit" \
