@@ -35,7 +35,7 @@ declare -A VM_SETTINGS=(
     ["MEMORY"]=8192                                      # VM Memory in GB
     ["VM_NETWORK"]=""                                    # Network for VM
     ["VM_HARDDISK_SIZE"]="60"                            # Ex: 60 would create a 60 GB hard disk.
-    ["NUMBER_VMS"]=2                                     # Number of VMs to create
+    ["NUMBER_VMS"]=1                                     # Number of VMs to create
 )
 
 # Store data to $VALUES variable and present is as form
