@@ -1,4 +1,4 @@
-function user_selection_single () {
+function user_selection_single() {
     msg() {
         echo >&2 -e "${1-}"
     }
@@ -16,8 +16,7 @@ function user_selection_single () {
     }
 
     usage() {
-cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] -b|--backtitle back_title -t|--title menu_title -p|--pvesh pvesh_cmd -c|--column column_to_grab -a|--auto auto_return
+        printf '%s\n' 'Usage: '$(basename "${BASH_SOURCE[0]}") '[-h] -b|--backtitle back_title -t|--title menu_title -p|--pvesh pvesh_cmd -c|--column column_to_grab -a|--auto auto_return
 
 Creates dialog menu using results from given pvesh command, column to grab, and auto return if only one option:
 
@@ -28,8 +27,7 @@ Available options:
 -t, --title     Title of the dialog
 -p, --pvesh     pvesh command, ex: pvesh get /cluster/sdn/zones --type simple --output json
 -c, --column    column to grab, ex: zone
--a, --auto      auto return option if only one
-EOF
+-a, --auto      auto return option if only one'
     }
 
     set -Eeuo pipefail
@@ -39,27 +37,31 @@ EOF
 
     while [ "$#" -gt 0 ]; do
         case "$1" in
-            -b|--backtitle)
-                back_title="$2"
-                shift 2
-                ;;
-            -t|--title)
-                menu_title="$2"
-                shift 2
-                ;;
-            -p|--pvesh)
-                pvesh_cmd="$2"
-                shift 2
-                ;;
-            -c|--column)
-                column_to_grab="$2"
-                shift 2
-                ;;
-            -a|--auto)
-                auto_return="$2"
-                shift 2
-                ;;
-            *)
+        -b | --backtitle)
+            back_title="$2"
+            shift 2
+            ;;
+        -t | --title)
+            menu_title="$2"
+            shift 2
+            ;;
+        -p | --pvesh)
+            pvesh_cmd="$2"
+            shift 2
+            ;;
+        -c | --column)
+            column_to_grab="$2"
+            shift 2
+            ;;
+        -a | --auto)
+            auto_return="$2"
+            shift 2
+            ;;
+        -h | --help)
+            usage
+            return 0
+            ;;
+        *)
             echo "Unknown option: $1"
             return 1
             ;;
@@ -76,7 +78,6 @@ EOF
     ##
     test_options=$(eval "$pvesh_cmd" | jq -r ".[] | .$column_to_grab" | sort)
 
-
     matching_options=()
     for single_option in $test_options; do
         # echo "single_option: $single_option"
@@ -92,7 +93,7 @@ EOF
         printf -v final_choice "%s\n" "${choices[@]}"
 
         ## subtract one from final_choice to get index
-        final_choice=$((final_choice-1))
+        final_choice=$((final_choice - 1))
 
         ## 'return' the selected option
         echo "${matching_options[$final_choice]}"

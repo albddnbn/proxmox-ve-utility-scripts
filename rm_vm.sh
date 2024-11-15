@@ -8,13 +8,50 @@
 #
 # The script checks whether chosen item is a VM or container and destroys it using the appropriate command-line utility.
 # Script uses the qm and pct command-line utilities to remove VMs and containers from Proxmox VE.
-# 
+#
 # https://pve.proxmox.com/pve-docs/pct.1.html
 # https://pve.proxmox.com/pve-docs/qm.1.html
 #
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do: combine pct/qm sections since they use similar arguments.
+msg() {
+    echo >&2 -e "${1-}"
+}
 
+die() {
+    local msg=$1
+    local code=${2-1} # default exit status 1
+    msg "$msg"
+    exit "$code"
+}
+
+cleanup() {
+    trap - SIGINT SIGTERM ERR EXIT
+    # script cleanup here
+}
+
+usage() {
+    # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
+    printf '%s\n' 'Presents list of VMs/containers.\nAttempts to remove selected ones.\n\n'
+}
+
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+done
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
@@ -28,7 +65,7 @@ for single_vm in $VMS_TO_REMOVE; do
 
     ## this loop cycles through the VM IDs that user has chosen to delete.
     ## the id property of /cluster/resources --type vm holds whether a VM is qemu or lxc
-    mapfile -t pve_api_listing <<< $(eval "pvesh get /cluster/resources --type vm --output json" | jq -r ".[] | .id" | grep "$single_vm")
+    mapfile -t pve_api_listing <<<$(eval "pvesh get /cluster/resources --type vm --output json" | jq -r ".[] | .id" | grep "$single_vm")
 
     container_type=$(echo $pve_api_listing | cut -d '/' -f 1)
 
