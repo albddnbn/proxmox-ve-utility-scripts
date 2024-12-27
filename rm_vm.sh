@@ -32,7 +32,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Presents list of VMs/containers.\nAttempts to remove selected ones.\n\n'
+    echo -e '\nPresents list of VMs/containers.\nAttempts to remove selected ones.\n'
 }
 
 set -Eeuo pipefail

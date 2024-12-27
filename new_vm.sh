@@ -32,7 +32,8 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new Proxmox Virtual Machine'
+    echo -e '\nCreates a new Proxmox Virtual Machine.\n'
+    echo -e 'Script fails if no ISOs are found in the selected storage.\n'
 }
 
 set -Eeuo pipefail
@@ -65,14 +66,14 @@ done
 ## Hostname prefix - prefix for VM hostnames, a number is appended. If it's a single digit, it has a 0 before it.
 declare -A VM_SETTINGS=(
     ## Details for VM creation:
-    ["STARTING_VM_ID"]="100"    # Ex: 101
-    ["HOSTNAME_PREFIX"]="a-pc-" # Ex: lab-pc-
-    ["NUM_CORES"]=1             # Number of CPU cores used by VM
-    ["NUM_SOCKETS"]=1           # Number of CPU sockets used by VM
-    ["MEMORY"]=8192             # VM Memory in GB
-    ["VM_NETWORK"]=""           # Network for VM
-    ["VM_HARDDISK_SIZE"]="60"   # Ex: 60 would create a 60 GB hard disk.
-    ["NUMBER_VMS"]=1            # Number of VMs to create
+    ["STARTING_VM_ID"]="100"   # Ex: 101
+    ["HOSTNAME_PREFIX"]="a-pc" # Ex: lab-pc-
+    ["NUM_CORES"]=1            # Number of CPU cores used by VM
+    ["NUM_SOCKETS"]=1          # Number of CPU sockets used by VM
+    ["MEMORY"]=8192            # VM Memory in GB
+    ["VM_NETWORK"]=""          # Network for VM
+    ["VM_HARDDISK_SIZE"]="60"  # Ex: 60 would create a 60 GB hard disk.
+    ["NUMBER_VMS"]=1           # Number of VMs to create
 )
 
 # Store data to $VALUES variable and present is as form
@@ -148,12 +149,10 @@ NETWORK_ADAPTER_TYPE="e1000" # Some example options include: e1000, virtio e1000
 for i in $(seq ${VM_SETTINGS['NUMBER_VMS']}); do
 
     ## Does not add anything to hostname for first vm created, after that - appends a number.
-    if [ $i -eq 1 ]; then
-        virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}"
-    elif [ $i -lt 10 ]; then
+    if [ $i -lt 10 ]; then
         i="0$i"
-        virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}-$i"
     fi
+    virtual_machine_name="${VM_SETTINGS['HOSTNAME_PREFIX']}$i"
 
     vm_ids=$(pvesh get /cluster/resources --type vm -output json | jq -r '.[] | .vmid')
 

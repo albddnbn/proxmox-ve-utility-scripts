@@ -32,7 +32,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new Proxmox LXC container.\n\n'
+    echo -e '\nCreates a new Proxmox LXC container.\n'
 }
 
 set -Eeuo pipefail

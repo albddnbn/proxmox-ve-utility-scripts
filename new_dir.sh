@@ -32,7 +32,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new Proxmox storage directory/disk.\n\n'
+    echo -e '\nCreates a new Proxmox storage directory/disk.\n'
 }
 
 set -Eeuo pipefail
@@ -60,7 +60,7 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
 done
 
 ## User enters name for Proxmox Directory:
-PROXMOX_DIR_NAME=$(create_text_entry -t "Proxmox Directory Name" -s "Enter name for Proxmox directory:")
+PROXMOX_DIR_NAME=$(create_text_entry -t "Proxmox Directory Name" -s "Enter name for Proxmox directory (will be added to /mnt/):")
 
 ## Give user option to select storage device.
 ## This creates an array of all storage DISKS on system:

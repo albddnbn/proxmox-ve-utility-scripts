@@ -30,7 +30,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new Proxmox Virtual Machine, that has snapshot functionality.\n\n'
+    echo -e '\nCreates a new Proxmox Virtual Machine, that has snapshot functionality.\n'
 }
 
 set -Eeuo pipefail

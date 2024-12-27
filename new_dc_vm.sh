@@ -41,7 +41,8 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new virtual machine.\nWindows Active Directory Domain Controller using dc-vm-rules.txt for Proxmox firewall rules.\n'
+    echo -e '\nCreates a new virtual machine.\nWindows Active Directory Domain Controller using dc-vm-rules.txt for Proxmox firewall rules.\n'
+
 }
 
 set -Eeuo pipefail

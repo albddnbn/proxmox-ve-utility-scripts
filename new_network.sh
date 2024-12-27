@@ -27,7 +27,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Creates a new network in Proxmox Virtual Environment.\n\n'
+    echo -e '\nCreates a new network in Proxmox Virtual Environment.\n'
 }
 
 set -Eeuo pipefail

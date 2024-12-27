@@ -28,7 +28,7 @@ cleanup() {
 
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    printf '%s\n' 'Presents list of available zones/virtual bridges/networks.\nAttempts to remove selected ones, including any contents.\n'
+    echo -e '\nPresents list of available zones/virtual bridges/networks.\nAttempts to remove selected ones, including any contents.\n'
 }
 
 set -Eeuo pipefail
