@@ -16,8 +16,7 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:
-# - Look into cloud-init or other options for efficiently configuring VMs.
-# - Create firewall rules files for other situations (windows client, basic linux server, etc.)
+# - Test new firewall rules .txt
 
 ########################################################################################################################
 ## Stage 1 - Preparation
@@ -42,7 +41,6 @@ cleanup() {
 usage() {
     # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
     echo -e '\nCreates a new virtual machine.\nWindows Active Directory Domain Controller using dc-vm-rules.txt for Proxmox firewall rules.\n'
-
 }
 
 set -Eeuo pipefail
@@ -164,11 +162,11 @@ ZONEVALUES=$(dialog --ok-label "Submit" \
     --title "Verify Proxmox SDN Zone Settings" \
     --form "Choose cancel to skip virtual network creation:" \
     25 80 0 \
-    "Zone Name:" 1 1 "${SDN_SETTINGS['ZONE_NAME']}" 1 25 35 0 \
+    "Zone Name (<= 8 chars):" 1 1 "${SDN_SETTINGS['ZONE_NAME']}" 1 25 35 0 \
     "Zone Comment:" 2 1 "${SDN_SETTINGS['ZONE_COMMENT']}" 2 25 35 0 \
-    "Vnet Name:" 3 1 "${SDN_SETTINGS['VNET_NAME']}" 3 25 35 0 \
-    "Vnet Alias:" 4 1 "${SDN_SETTINGS['VNET_ALIAS']}" 4 25 35 0 \
-    "Vnet Subnet" 5 1 "${SDN_SETTINGS['VNET_SUBNET']}" 5 25 35 0 \
+    "Vnet Name (<= 8 chars):" 3 1 "${SDN_SETTINGS['VNET_NAME']}" 3 25 35 0 \
+    "Vnet Alias (<= 8 chars):" 4 1 "${SDN_SETTINGS['VNET_ALIAS']}" 4 25 35 0 \
+    "Vnet Subnet w/CIDR" 5 1 "${SDN_SETTINGS['VNET_SUBNET']}" 5 25 35 0 \
     "Vnet Gateway:" 6 1 "${SDN_SETTINGS['VNET_GATEWAY']}" 6 25 35 0 \
     3>&1 1>&2 2>&3 3>&-)
 
@@ -209,11 +207,11 @@ VALUES=$(dialog --ok-label "Submit" \
     --title "Verify Network Alias creations" \
     --form "Please choose cancel to skip alias creations:" \
     25 80 0 \
-    "Virtual Machine Alias:" 1 1 "${VM_SETTINGS['MACHINE_ALIAS']}" 1 25 35 0 \
-    "Virtual Machine IP Addr (CIDR):" 2 1 "${VM_SETTINGS['MACHINE_CIDR']}" 2 25 35 0 \
+    "VM Alias (<= 8 chars):" 1 1 "${VM_SETTINGS['MACHINE_ALIAS']}" 1 25 35 0 \
+    "VM IP Addr (CIDR):" 2 1 "${VM_SETTINGS['MACHINE_CIDR']}" 2 25 35 0 \
     "VM Alias Comment:" 3 1 "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" 3 25 35 0 \
     "Virtual LAN Alias:" 4 1 "${VM_SETTINGS['LAN_ALIAS']}" 4 25 35 0 \
-    "Virtual LAN CIDR:" 5 1 "${VM_SETTINGS['LAN_CIDR']}" 5 25 35 0 \
+    "Virtual LAN CIDR:" 5 1 "${SDN_SETTINGS['VNET_SUBNET']}" 5 25 35 0 \
     "Virtual LAN Comment:" 6 1 "${VM_SETTINGS['LAN_COMMENT']}" 6 25 35 0 \
     3>&1 1>&2 2>&3 3>&-)
 
@@ -233,7 +231,7 @@ if [ -n "$VALUES" ]; then
     pid=$! # Process Id of the previous running command
     run_spinner $pid "Creating alias: ${VM_SETTINGS['MACHINE_ALIAS']}"
 
-    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${VM_SETTINGS['LAN_CIDR']}" 2>/dev/null &
+    pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['LAN_ALIAS']}" -comment "${VM_SETTINGS['LAN_COMMENT']}" -cidr "${SDN_SETTINGS['VNET_SUBNET']}" 2>/dev/null &
     pid=$! # Process Id of the previous running command
     run_spinner $pid "Creating alias: ${VM_SETTINGS['LAN_ALIAS']}"
 

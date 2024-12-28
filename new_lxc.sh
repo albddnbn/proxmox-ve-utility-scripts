@@ -14,44 +14,7 @@
 # - Check on possibility of setting password more efficiently but still securely.
 # - Check on container config options.
 # - Have choices only return *.tar* files where necessary.
-msg() {
-    echo >&2 -e "${1-}"
-}
 
-die() {
-    local msg=$1
-    local code=${2-1} # default exit status 1
-    msg "$msg"
-    exit "$code"
-}
-
-cleanup() {
-    trap - SIGINT SIGTERM ERR EXIT
-    # script cleanup here
-}
-
-usage() {
-    # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
-    echo -e '\nCreates a new Proxmox LXC container.\n'
-}
-
-set -Eeuo pipefail
-trap cleanup SIGINT SIGTERM ERR EXIT
-
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-    -h | --help)
-        usage
-        exit 0
-        ;;
-    *)
-        echo "Unknown option: $1"
-        exit 1
-        ;;
-    esac
-done
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

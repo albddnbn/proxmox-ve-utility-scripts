@@ -9,6 +9,8 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:
 # - Learn more about different networking options through Proxmox and incorporate them into script.
+# Notes:
+# - This was moved to testing until it becomes useful - it's easier to just create networks through GUI at this point.
 msg() {
     echo >&2 -e "${1-}"
 }
