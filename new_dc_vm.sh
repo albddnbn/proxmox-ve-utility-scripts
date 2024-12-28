@@ -17,6 +17,8 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:
 # - Test new firewall rules .txt
+# Notes:
+# - I'm not exactly sure what's going on with the alises, but it seems to work as is / except it inputs the LAN CIDR.
 
 ########################################################################################################################
 ## Stage 1 - Preparation
