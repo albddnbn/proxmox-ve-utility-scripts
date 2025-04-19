@@ -24,6 +24,8 @@
 ## Sourcing functions file, defining associative arrays, ensuring values are set, prompting user when necessary.
 ########################################################################################################################
 
+apt install jq dialog -y
+
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
