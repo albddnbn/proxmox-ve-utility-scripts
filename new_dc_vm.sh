@@ -222,11 +222,11 @@ if [ -n "$VALUES" ]; then
     mapfile -t vm_setting_choices <<<"$VALUES"
 
     ## Reassign values to VM_SETTINGS array
-    VM_SETTINGS["MACHINE_CIDR"]="${vm_setting_choices[0]}"
-    VM_SETTINGS["MACHINE_ALIAS"]="${vm_setting_choices[1]}"
+    VM_SETTINGS["MACHINE_CIDR"]="${vm_setting_choices[1]}"
+    VM_SETTINGS["MACHINE_ALIAS"]="${vm_setting_choices[0]}"
     VM_SETTINGS["MACHINE_ALIAS_COMMENT"]="${vm_setting_choices[2]}"
-    VM_SETTINGS["LAN_CIDR"]="${vm_setting_choices[3]}"
-    VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[4]}"
+    VM_SETTINGS["LAN_CIDR"]="${vm_setting_choices[4]}"
+    VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[3]}"
     VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[5]}"
 
     pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}" 2>/dev/null &
