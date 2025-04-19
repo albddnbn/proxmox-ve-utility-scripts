@@ -15,6 +15,8 @@
 # To Do:
 # - Improve script
 
+apt install jq dialog parted -y
+
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
