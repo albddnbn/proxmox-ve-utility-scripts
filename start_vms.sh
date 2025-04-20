@@ -7,6 +7,18 @@
 # Usage: ./new_vm.sh
 # Notes: Script kind of pointless but may be able to be developed into something useful.
 ## Source functions from functions dir.
+if ! command -v dialog &>/dev/null; then
+    apt install dialog -y
+else
+    echo "Dialog is already installed."
+fi
+
+if ! command -v jq &>/dev/null; then
+    apt install jq -y
+else
+    echo "jq is already installed."
+fi
+
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 for file in $(ls "$script_dir/functions/"*".sh"); do

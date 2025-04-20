@@ -15,6 +15,13 @@
 # - Check on container config options.
 # - Have choices only return *.tar* files where necessary.
 
+if ! command -v dialog &>/dev/null; then
+    apt install dialog -y
+else
+    echo "Dialog is already installed."
+    sleep 5
+fi
+
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 

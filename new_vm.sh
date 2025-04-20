@@ -39,7 +39,7 @@ usage() {
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -53,6 +53,18 @@ while [ "$#" -gt 0 ]; do
         ;;
     esac
 done
+
+if ! command -v dialog &>/dev/null; then
+    apt install dialog -y
+else
+    echo "Dialog is already installed."
+fi
+
+if ! command -v jq &>/dev/null; then
+    apt install jq -y
+else
+    echo "jq is already installed."
+fi
 
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
