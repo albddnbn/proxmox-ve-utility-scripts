@@ -48,7 +48,7 @@ usage() {
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -62,6 +62,9 @@ while [ "$#" -gt 0 ]; do
         ;;
     esac
 done
+
+apt install jq dialog -y
+
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
@@ -222,11 +225,11 @@ if [ -n "$VALUES" ]; then
     mapfile -t vm_setting_choices <<<"$VALUES"
 
     ## Reassign values to VM_SETTINGS array
-    VM_SETTINGS["MACHINE_CIDR"]="${vm_setting_choices[1]}"
     VM_SETTINGS["MACHINE_ALIAS"]="${vm_setting_choices[0]}"
+    VM_SETTINGS["MACHINE_CIDR"]="${vm_setting_choices[1]}"
     VM_SETTINGS["MACHINE_ALIAS_COMMENT"]="${vm_setting_choices[2]}"
-    VM_SETTINGS["LAN_CIDR"]="${vm_setting_choices[4]}"
     VM_SETTINGS["LAN_ALIAS"]="${vm_setting_choices[3]}"
+    VM_SETTINGS["LAN_CIDR"]="${vm_setting_choices[4]}"
     VM_SETTINGS["LAN_COMMENT"]="${vm_setting_choices[5]}"
 
     pvesh create /cluster/firewall/aliases --name "${VM_SETTINGS['MACHINE_ALIAS']}" -comment "${VM_SETTINGS['MACHINE_ALIAS_COMMENT']}" -cidr "${VM_SETTINGS['MACHINE_CIDR']}" 2>/dev/null &
