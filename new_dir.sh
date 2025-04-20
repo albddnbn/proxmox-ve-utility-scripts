@@ -35,7 +35,23 @@ usage() {
     echo -e '\nCreates a new Proxmox storage directory/disk.\n'
 }
 
-apt install jq dialog parted -y
+if ! command -v dialog &>/dev/null; then
+    apt install dialog -y
+else
+    echo "Dialog is already installed."
+fi
+
+if ! command -v jq &>/dev/null; then
+    apt install jq -y
+else
+    echo "jq is already installed."
+fi
+
+if ! command -v parted &>/dev/null; then
+    apt install parted -y
+else
+    echo "parted is already installed."
+fi
 
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
