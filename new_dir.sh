@@ -14,9 +14,46 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # To Do:
 # - Improve script
+msg() {
+    echo >&2 -e "${1-}"
+}
+
+die() {
+    local msg=$1
+    local code=${2-1} # default exit status 1
+    msg "$msg"
+    exit "$code"
+}
+
+cleanup() {
+    trap - SIGINT SIGTERM ERR EXIT
+    # script cleanup here
+}
+
+usage() {
+    # cat << EOF # remove the space between << and EOF, this is due to web plugin issue
+    echo -e '\nCreates a new Proxmox storage directory/disk.\n'
+}
 
 apt install jq dialog parted -y
 
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
+
+# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+done
 ## Source functions from functions dir.
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
@@ -25,15 +62,14 @@ for file in $(ls "$script_dir/functions/"*".sh"); do
 done
 
 ## User enters name for Proxmox Directory:
-PROXMOX_DIR_NAME=$(create_text_entry -t "Proxmox Directory Name" -s "Enter name for Proxmox directory:")
-
+PROXMOX_DIR_NAME=$(create_text_entry -t "Proxmox Directory Name" -s "Enter name for Proxmox directory (will be added to /mnt/):")
 
 ## Give user option to select storage device.
 ## This creates an array of all storage DISKS on system:
 ## disk_names=$(echo "$json_data" | jq -r '.blockdevices[] | select(.type == "disk") | .name')
 json_data=$(lsblk -J)
 uninitialized_disks=$(echo "$json_data" | jq -r '.blockdevices[] | select(.type == "disk") | select(.children == null) | .name')
-mapfile -t disk_options_array <<< $(echo "$uninitialized_disks")
+mapfile -t disk_options_array <<<$(echo "$uninitialized_disks")
 
 echo "options: ${disk_options_array[@]}"
 
@@ -56,9 +92,9 @@ chosen_disk=""
 
 if [[ ($length -gt 1) ]]; then
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
-    
+
     ## subtract one from final_choice to get index
-    final_choice=$((choices-1))
+    final_choice=$((choices - 1))
 
     ## 'return' the selected option
     chosen_disk="${disk_options_array[$final_choice]}"
@@ -94,7 +130,7 @@ mount -o defaults "$partition_path" "/mnt/$PROXMOX_DIR_NAME"
 fstab_string="LABEL=$PROXMOX_DIR_NAME /mnt/$PROXMOX_DIR_NAME ext4 defaults 0 2"
 
 ## Add to /etc/fstab:
-echo "$fstab_string" >> /etc/fstab
+echo "$fstab_string" >>/etc/fstab
 
 ## Add storage to Proxmox
 pvesm add dir "$PROXMOX_DIR_NAME" --path "/mnt/$PROXMOX_DIR_NAME" --content rootdir,backup,iso,vztmpl,images,snippets

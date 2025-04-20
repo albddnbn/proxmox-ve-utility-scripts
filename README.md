@@ -1,4 +1,5 @@
 # proxmox-ve-utility-scripts
+
 ![Bash](https://img.shields.io/badge/language-Bash-05c100)
 
 Collection of shell scripts to maximize efficiency when using Proxmox VE. Anyone is welcome to use these scripts, but if you run into issues, make improvements, or find them particularly useful - please let me know, I would love to hear about your experience.
@@ -47,6 +48,7 @@ chmod +x ./*.sh
 All scripts in the base directory of the repository can be run without any parameters or arguments. They are designed to be interactive, mostly through the use of bash dialogs.
 
 The repository contains two types of scripts at the moment:
+
 1. Creation scripts (new): These scripts are used to create new resources, such as VMs, containers, etc.
 2. Deletion scripts (rm): These scripts are used to delete resources, such as VMs, containers, etc.
 
@@ -72,7 +74,7 @@ This is a walkthrough of running the create_vm.sh script. In this case, I'm crea
 ./create_vm.sh
 ```
 
-A prompt will appear,  confirming the settings for the virtual machine.
+A prompt will appear, confirming the settings for the virtual machine.
 
 ![VM Settings Prompt](img/create_vm_002.png)
 
@@ -107,4 +109,3 @@ This project is licensed under the GNU General Public License v3.0. You may obta
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
